@@ -5,5 +5,3 @@
 # その他不要なファイル
 __pycache__/
 .DS_Store
-static/
-司法書士過去問集CSV.csv
