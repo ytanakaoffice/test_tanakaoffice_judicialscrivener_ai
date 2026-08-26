@@ -808,6 +808,18 @@ if not st.session_state.get("user") and not st.session_state.get("trial_mode"):
 # ==========================================
 st.markdown("""
 <style>
+    /* ラジオボタンのラベル（出題モード等）と選択肢を横並びにする */
+    div[data-testid="stRadio"] {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 15px !important;
+    }
+    div[data-testid="stRadio"] > label {
+        margin-bottom: 0 !important;
+        min-width: fit-content;
+    }
+
     .stApp {
         background-color: #f8f9fa;
     }
@@ -1022,11 +1034,20 @@ def render_ai_teacher():
     img_path = image_map.get(current_state, image_map["normal"])
     
     with st.sidebar:
-        st.markdown("### AIたなかっち1号先生")
+        # サイドバーの一番上にタイトル画像を表示
+        title_path = "images/1_title.png" if os.path.exists("images/1_title.png") else "1_title.png"
+        if os.path.exists(title_path):
+            st.image(title_path, use_container_width=True)
+        else:
+            st.title("田中式 司法書士一問一答")
+            
+        # 美少女画像を表示した【後】に文字を配置するよう順番を入れ替え
         if os.path.exists(img_path):
             st.image(img_path, use_container_width=True)
         else:
             st.info(f"画像が見つかりません: {img_path}")
+            
+        st.markdown("### AIたなかっち1号先生")
         st.markdown("---")
 
 def render_inline_chat(row):
@@ -1259,7 +1280,7 @@ if menu == "年度別":
                             )
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         with col_next:
-                            st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="c_fast_toggle")
+                            st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="c_fast_toggle")
                             if st.button("次へ ➡", key=f"y_btn_next_top_{ptr}", use_container_width=True):
                                 st.session_state.y_ptr += 1
                                 st.session_state.y_answered = False
@@ -1400,7 +1421,7 @@ if menu == "年度別":
                             reset_inline_chat()
                             st.rerun()
     
-    render_header_image("bottom")
+
 
 # ==========================================
 # ルート2：科目別
@@ -1517,7 +1538,7 @@ elif menu == "科目別":
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         
                         with col_next_c:
-                            st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="bm_fast_toggle")
+                            st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="bm_fast_toggle")
                             if st.button("次へ ➡", key=f"c_btn_next_top_{ptr_c}", use_container_width=True):
                                 st.session_state.c_ptr += 1
                                 st.session_state.c_answered = False
@@ -1658,7 +1679,7 @@ elif menu == "科目別":
                         reset_inline_chat()
                         st.rerun()
 
-    render_header_image("bottom")
+
 
 # ==========================================
 # ルート2.5：付箋問題
@@ -1781,7 +1802,7 @@ elif menu == "付箋問題":
                                 st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                             
                             with col_next_bm:
-                                st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="y_fast_toggle")
+                                st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="y_fast_toggle")
                                 if st.button("次へ ➡", key=f"bm_btn_next_top_{ptr_bm}", use_container_width=True):
                                     st.session_state.bm_ptr += 1
                                     st.session_state.bm_answered = False
@@ -1920,7 +1941,7 @@ elif menu == "付箋問題":
                             reset_inline_chat()
                             st.rerun()
 
-    render_header_image("bottom")
+
 
 # ==========================================
 # ルート3：過去問聞き流し
