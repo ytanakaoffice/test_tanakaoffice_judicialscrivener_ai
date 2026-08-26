@@ -1182,6 +1182,17 @@ if is_logged_in:
         }
     }
     /* 👆👆👆 追加ここまで 👆👆👆 */
+    /* 👇👇👇 プルダウン内の透明inputが太って文字を潰す現象を強制リセット 👇👇👇 */
+    div[data-testid="stSelectbox"] input {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 2px !important;
+    }
+    /* 念のため文字色も黒に強制指定 */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+        color: #0F172A !important;
+    }
+    /* 👆👆👆 追加ここまで 👆👆👆 */
     </style>
     """, unsafe_allow_html=True)
 
