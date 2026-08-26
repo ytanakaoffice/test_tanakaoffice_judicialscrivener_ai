@@ -364,6 +364,7 @@ def execute_account_deletion(user_email, user_id):
 # ==========================================
 # 3. ユーティリティ・ダイアログ・Paywall
 # ==========================================
+@st.cache_data
 def get_image_base64(path):
     try:
         with open(path, "rb") as f:
@@ -477,6 +478,7 @@ def show_payment_dialog():
     
     st.link_button("決済画面へ進む（Stripe）", stripe_url, type="primary", use_container_width=True)
     if st.button("🔄 決済完了後の状態を再確認する", use_container_width=True):
+        st.session_state["is_premium"] = check_access(user_email)
         st.rerun()
 
 def render_paywall():
@@ -540,6 +542,7 @@ def show_delete_account_dialog():
         
         st.markdown("<div style='margin-top: 10px;'></div>", unsafe_allow_html=True)
         if st.button("🔄 Stripeで解約後、状態を再確認する", key="btn_recheck_in_dialog", use_container_width=True):
+            st.session_state["is_premium"] = check_access(curr_email)
             st.rerun()
         return
 
@@ -619,8 +622,13 @@ if st.session_state.get("user"):
     is_logged_in = True
     user_email = st.session_state["user"]["email"]
     user_id = st.session_state["user"]["id"]
-    ensure_subscription_record(user_email, user_id)
-    is_premium = check_access(user_email)
+    
+    # 毎回DBに問い合わせると画面遷移（次の問題へ等）が遅くなるため、セッションにキャッシュする
+    if "is_premium" not in st.session_state:
+        ensure_subscription_record(user_email, user_id)
+        st.session_state["is_premium"] = check_access(user_email)
+        
+    is_premium = st.session_state["is_premium"]
 
 # ==========================================
 # A. 未ログイン時の表示
@@ -1178,7 +1186,8 @@ if menu == "年度別":
 
                     with col_bm:
                         if not is_logged_in:
-                            st.button("🔖 付箋", disabled=True, help="付箋機能はログインが必要です", use_container_width=True)
+                            if st.button("🔖 付箋", key=f"bm_disabled_y_{ptr}", use_container_width=True):
+                                st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
                         elif is_bookmarked:
                             if st.button("📌 解除", key=f"bm_remove_y_{ptr}", type="primary", use_container_width=True):
                                 if remove_bookmark(user_id, q_key):
@@ -1400,7 +1409,8 @@ elif menu == "科目別":
 
                     with col_bm_c:
                         if not is_logged_in:
-                            st.button("🔖 付箋", disabled=True, help="付箋機能はログインが必要です", use_container_width=True)
+                            if st.button("🔖 付箋", key=f"bm_disabled_c_{ptr_c}", use_container_width=True):
+                                st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
                         elif is_bookmarked:
                             if st.button("📌 解除", key=f"bm_remove_c_{ptr_c}", type="primary", use_container_width=True):
                                 if remove_bookmark(user_id, q_key):
