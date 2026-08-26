@@ -109,17 +109,10 @@ def render_continuous_player(playlist, current_batch, total_batches, auto_start=
     auto_start_js = "true" if auto_start else "false"
     
     html_code = f"""
-    <div style="position: relative; background-color: #ffffff; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; font-family: sans-serif; box-sizing: border-box;">
-        
-        <!-- 自動再生ブロック時のオーバーレイ（スマホ対策） -->
-        <div id="play-overlay" style="display: none; position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.95); z-index: 10; align-items: center; justify-content: center; flex-direction: column; border-radius: 12px;">
-            <p style="font-weight: bold; color: #e11d48; margin-bottom: 12px; font-size: 0.95rem;">スマホの制限により自動再生が停止しました</p>
-            <button onclick="startFromOverlay()" style="padding: 12px 24px; font-size: 1.1rem; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">▶ タップして再生を再開</button>
-        </div>
-
+    <div style="background-color: #ffffff; padding: 16px; border-radius: 12px; border: 1px solid #e0e0e0; font-family: sans-serif; box-sizing: border-box;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
             <span id="batch-info" style="font-size: 0.85rem; font-weight: bold; color: #4f46e5; background: #eeeefd; padding: 4px 10px; border-radius: 6px;">
-                グループ {current_batch + 1} / {total_batches}
+                グループ {current_batch + 1} / {total_batches} （10問単位）
             </span>
             <span id="playlist-status" style="font-size: 0.85rem; color: #64748b;"></span>
         </div>
@@ -144,13 +137,6 @@ def render_continuous_player(playlist, current_batch, total_batches, auto_start=
         const infoEl = document.getElementById('track-info');
         const detailEl = document.getElementById('track-detail');
         const statusEl = document.getElementById('playlist-status');
-        const overlay = document.getElementById('play-overlay');
-
-        // オーバーレイからの再生再開
-        function startFromOverlay() {{
-            overlay.style.display = 'none';
-            player.play().catch(e => console.log(e));
-        }}
 
         function loadTrack(index) {{
             if (index < 0 || index >= playlist.length) return;
@@ -187,11 +173,11 @@ def render_continuous_player(playlist, current_batch, total_batches, auto_start=
         }}
 
         function autoClickNextBatch() {{
-            infoEl.innerText = "次の問題を自動読み込み中...";
+            infoEl.innerText = "次の10問を自動読み込み中...";
             setTimeout(function() {{
                 try {{
                     const buttons = Array.from(window.parent.document.querySelectorAll('button'));
-                    const nextBtn = buttons.find(b => b.innerText && b.innerText.includes('次のグループへ'));
+                    const nextBtn = buttons.find(b => b.innerText && b.innerText.includes('次の10問へ'));
                     if (nextBtn) {{
                         nextBtn.click();
                     }}
@@ -212,14 +198,7 @@ def render_continuous_player(playlist, current_batch, total_batches, auto_start=
         if (playlist.length > 0) {{
             loadTrack(0);
             if (autoStart && playlist[0].url) {{
-                // ★スマホではここがブロックされるので、エラーを検知してボタンを出す
-                const playPromise = player.play();
-                if (playPromise !== undefined) {{
-                    playPromise.catch(error => {{
-                        console.log("自動再生ブロック:", error);
-                        overlay.style.display = 'flex';
-                    }});
-                }}
+                player.play().catch(e => console.log("自動再生ブロック:", e));
             }}
         }}
     </script>
@@ -1961,7 +1940,9 @@ elif menu == "付箋問題":
 # ルート3：過去問聞き流し
 # ==========================================
 elif menu == "過去問聞き流し":
+    render_header_image("top-always")
     st.subheader("🎧 過去問連続聞き流しモード")
+
     listen_type = st.radio("絞り込み方法を選択", ["年度別", "科目別"], horizontal=True, key="listen_type_radio")
 
     target_rows = pd.DataFrame()
@@ -1996,32 +1977,15 @@ elif menu == "過去問聞き流し":
             target_rows = df[df["分野"] == sel_cat].reset_index(drop=True)
 
     if not target_rows.empty:
-        batch_size = 20
+        batch_size = 10
         total_questions = len(target_rows)
         total_batches = (total_questions + batch_size - 1) // batch_size
 
-        # 初期化
         if "listen_batch_page" not in st.session_state:
             st.session_state.listen_batch_page = 0
 
-        # --- ▼ 修正のポイント：ボタンの入力を先回りして処理する ---
-        # 隠しパラメータとしてボタン押下のフラグを受け取り、先にページ番号を更新する
-        if st.session_state.get("btn_prev_clicked"):
-            st.session_state.listen_batch_page -= 1
-            st.session_state.auto_play_next = True
-            st.session_state.btn_prev_clicked = False
-        
-        if st.session_state.get("btn_next_clicked"):
-            st.session_state.listen_batch_page += 1
-            st.session_state.auto_play_next = True
-            st.session_state.btn_next_clicked = False
-
-        # 範囲外エラー防止
         if st.session_state.listen_batch_page >= total_batches:
             st.session_state.listen_batch_page = 0
-        elif st.session_state.listen_batch_page < 0:
-            st.session_state.listen_batch_page = 0
-        # --- ▲ ここまで ---
 
         batch_options = []
         for i in range(total_batches):
@@ -2037,37 +2001,30 @@ elif menu == "過去問聞き流し":
             else:
                 batch_options.append(batch_str + " 🔒[有料会員限定]")
 
-        current_batch_page = st.session_state.listen_batch_page
-        current_option_str = batch_options[current_batch_page]
+        def sync_batch_selection():
+            try:
+                st.session_state.listen_batch_page = batch_options.index(st.session_state.selected_batch_str)
+            except ValueError:
+                st.session_state.listen_batch_page = 0
 
-        # セレクトボックスを表示
         selected_batch_str = st.selectbox(
             "再生する問題範囲を選択:", 
             batch_options, 
-            index=current_batch_page, 
-            key="selected_batch_str"
+            index=st.session_state.listen_batch_page, 
+            key="selected_batch_str",
+            on_change=sync_batch_selection
         )
 
-        # プルダウンが手動で変更された場合
-        if selected_batch_str != current_option_str:
-            try:
-                st.session_state.listen_batch_page = batch_options.index(selected_batch_str)
-                st.rerun() # ★変更を即座に反映
-            except ValueError:
-                pass
+        current_batch_page = st.session_state.listen_batch_page
 
         if "🔒" in selected_batch_str:
             render_paywall()
             col1, col2 = st.columns(2)
-            with col1:
-                if current_batch_page > 0:
-                    if st.button("⏮ 前のグループへ", use_container_width=True, key="btn_prev_batch_lock"):
-                        st.session_state.btn_prev_clicked = True
-                        st.rerun()
             with col2:
                 if current_batch_page + 1 < total_batches:
-                    if st.button("次のグループへ ⏩", use_container_width=True, key="btn_next_batch_lock"):
-                        st.session_state.btn_next_clicked = True
+                    if st.button("次の10問へスキップ ⏩", key="btn_skip_batch_lock"):
+                        st.session_state.listen_batch_page += 1
+                        st.session_state.auto_play_next = True
                         st.rerun()
         else:
             start_q = current_batch_page * batch_size
@@ -2133,17 +2090,19 @@ elif menu == "過去問聞き流し":
                 col1, col2 = st.columns(2)
                 with col1:
                     if current_batch_page > 0:
-                        if st.button("⏮ 前のグループへ", use_container_width=True, key="btn_prev_batch"):
-                            st.session_state.btn_prev_clicked = True
+                        if st.button("⏮ 前の10問へ", use_container_width=True, key="btn_prev_batch"):
+                            st.session_state.listen_batch_page -= 1
+                            st.session_state.auto_play_next = True
                             st.rerun()
                 with col2:
                     if current_batch_page + 1 < total_batches:
-                        if st.button("次のグループへ ⏩", use_container_width=True, key="btn_next_batch"):
-                            st.session_state.btn_next_clicked = True
+                        if st.button("次の10問へ ⏩", use_container_width=True, key="btn_next_batch"):
+                            st.session_state.listen_batch_page += 1
+                            st.session_state.auto_play_next = True
                             st.rerun()
             else:
                 st.error("選択された区間の対応音声ファイルが見つかりませんでした。")
-                
+
 # ==========================================
 # ルート4：AIに質問（チャット）
 # ==========================================
