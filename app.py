@@ -857,7 +857,8 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        div[data-testid="stHorizontalBlock"] {
+        /* ▼ セレクトボックス(プルダウン)を【含まない】行のみ、ボタンを横並びにする */
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: wrap !important;
@@ -866,6 +867,7 @@ st.markdown("""
             box-sizing: border-box !important;
         }
         
+        /* ▼ セレクトボックスを【含まない】行の各カラムを50%の幅にする */
         div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) > div[data-testid="column"] {
             width: calc(50% - 5px) !important;
             min-width: 120px !important;
@@ -873,26 +875,13 @@ st.markdown("""
             box-sizing: border-box !important;
         }
 
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) {
-            flex-direction: column !important;
-        }
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) > div[data-testid="column"] {
-            width: 100% !important;
-            min-width: 100% !important;
-            box-sizing: border-box !important;
-        }
-
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"] {
-            flex: none !important;
-            width: 100% !important;
-        }
-
-        div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) {
+        /* ▼ ボタンのデザイン強制も、セレクトボックスを【含まない】行のボタンだけに限定する */
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) button {
             width: 100% !important;
             height: 46px !important;
             padding: 0 !important;
         }
-        div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) p {
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) button p {
             font-size: 0.9rem !important;
             white-space: nowrap !important;
             overflow: hidden !important;
