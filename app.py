@@ -828,48 +828,59 @@ st.markdown("""
     .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
     .header-img-bottom { display: block !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
 
-    .keep-row, .keep-row-73 { display: none; }
-    .big-btn-row { display: none; }
-    div[data-testid="stElementContainer"]:has(.big-btn-row) + div[data-testid="stHorizontalBlock"] button {
+    /* Base big button styles for PC */
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(2) button,
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(3) button {
         height: 60px !important;
-        font-size: 1.2rem !important;
+        font-size: 1.1rem !important;
         font-weight: 700 !important;
         border-radius: 12px !important;
-        border: 2px solid #e2e8f0 !important;
+        border: 1px solid #e2e8f0 !important;
         color: #334155 !important;
         background-color: #f8fafc !important;
     }
-    div[data-testid="stElementContainer"]:has(.big-btn-row) + div[data-testid="stHorizontalBlock"] button:hover {
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(2) button:hover,
+    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(3) button:hover {
         background-color: #e2e8f0 !important;
         border-color: #cbd5e1 !important;
         color: #0f172a !important;
     }
+
     @media (max-width: 768px) {
-        div[data-testid="stElementContainer"]:has(.keep-row) + div[data-testid="stHorizontalBlock"] {
+        /* Force horizontal layout for ALL columns in main container */
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 10px !important;
+            gap: 6px !important;
         }
-        div[data-testid="stElementContainer"]:has(.keep-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            width: 50% !important;
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            width: auto !important;
+            min-width: 0 !important;
             flex: 1 1 0% !important;
-            min-width: 0 !important;
         }
-        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] {
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            gap: 10px !important;
+        
+        /* Adjust the first row (Info and Next button) to 70:30 ratio */
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(1) {
+            flex: 2 1 0% !important;
         }
-        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
-            width: 65% !important;
-            flex: 6.5 1 0% !important;
-            min-width: 0 !important;
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(2) {
+            flex: 1 1 0% !important;
         }
-        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
-            width: 35% !important;
-            flex: 3.5 1 0% !important;
-            min-width: 0 !important;
+
+        /* Adjust button sizes for mobile */
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
+            height: 50px !important;
+            font-size: 1rem !important;
+            border-radius: 8px !important;
         }
+        /* Make the top right toggle & next buttons smaller */
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) button,
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) div[data-testid="stToggle"] {
+            height: 38px !important;
+            font-size: 0.85rem !important;
+            margin-bottom: 2px !important;
+        }
+        
         .header-img-top-hide-mobile { display: none !important; }
         
         .custom-question-card {
@@ -1236,7 +1247,7 @@ if menu == "年度別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
-                        st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
+                        
                         col_info, col_next = st.columns([7, 3])
                         with col_info:
                             st.markdown(
@@ -1262,7 +1273,7 @@ if menu == "年度別":
 
                         if not st.session_state.y_answered:
                             if st.session_state.get("fast_mode", False):
-                                st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                
                                 col_btn_o, col_btn_x = st.columns(2)
                                 clicked_o = col_btn_o.button("〇 正解", key=f"y_o_{ptr}", use_container_width=True)
                                 clicked_x = col_btn_x.button("✖ 不正解", key=f"y_x_{ptr}", use_container_width=True)
@@ -1291,7 +1302,7 @@ if menu == "年度別":
                                 st.rerun()
 
                     with ui_actions:
-                        st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
+                        
                         col_audio, col_bm = st.columns(2)
                         with col_audio:
                             if st.button("🔊 音声", key=f"btn_audio_y_{ptr}", use_container_width=True):
@@ -1493,7 +1504,7 @@ elif menu == "科目別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
-                        st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
+                        
                         col_info_c, col_next_c = st.columns([7, 3])
                         with col_info_c:
                             st.markdown(
@@ -1520,7 +1531,7 @@ elif menu == "科目別":
 
                         if not st.session_state.c_answered:
                             if st.session_state.get("fast_mode", False):
-                                st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                
                                 col_btn_o_c, col_btn_x_c = st.columns(2)
                                 clicked_o_c = col_btn_o_c.button("〇 正解", key=f"c_o_{ptr_c}", use_container_width=True)
                                 clicked_x_c = col_btn_x_c.button("✖ 不正解", key=f"c_x_{ptr_c}", use_container_width=True)
@@ -1549,7 +1560,7 @@ elif menu == "科目別":
                                 st.rerun()
                                 
                     with ui_actions:
-                        st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
+                        
                         col_audio_c, col_bm_c = st.columns(2)
                         with col_audio_c:
                             if st.button("🔊 音声", key=f"btn_audio_c_{ptr_c}", use_container_width=True):
@@ -1757,7 +1768,7 @@ elif menu == "付箋問題":
                         is_bookmarked = q_key in st.session_state.user_bookmarks
 
                         with ui_top:
-                            st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
+                            
                             col_info_bm, col_next_bm = st.columns([7, 3])
                             with col_info_bm:
                                 st.markdown(
@@ -1784,7 +1795,7 @@ elif menu == "付箋問題":
 
                             if not st.session_state.bm_answered:
                                 if st.session_state.get("fast_mode", False):
-                                    st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                    
                                     col_btn_o_bm, col_btn_x_bm = st.columns(2)
                                     clicked_o_bm = col_btn_o_bm.button("〇 正解", key=f"bm_o_{ptr_bm}", use_container_width=True)
                                     clicked_x_bm = col_btn_x_bm.button("✖ 不正解", key=f"bm_x_{ptr_bm}", use_container_width=True)
@@ -1813,7 +1824,7 @@ elif menu == "付箋問題":
                                     st.rerun()
 
                         with ui_actions:
-                            st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
+                            
                             col_audio_bm, col_bm_bm = st.columns(2)
                             with col_audio_bm:
                                 if st.button("🔊 音声", key=f"btn_audio_bm_{ptr_bm}", use_container_width=True):
