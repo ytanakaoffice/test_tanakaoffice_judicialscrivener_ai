@@ -916,6 +916,30 @@ st.markdown("""
             line-height: 1.5 !important;
         }
     }
+    /* 👇👇👇 スマホのプルダウン文字消失を全方位から強制ブロック 👇👇👇 */
+        @media (max-width: 768px) {
+            div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+                background-color: #ffffff !important;
+            }
+            div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+                color: #0F172A !important;
+            }
+            div[data-testid="stSelectbox"] div[class*="singleValue"] {
+                display: block !important;
+                min-width: 150px !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            }
+            div[data-testid="stSelectbox"] div[role="combobox"] {
+                padding: 8px 14px !important;
+                min-height: 46px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+            }
+        }
+        /* 👆👆👆 追加ここまで 👆👆👆 */
+    } /* ←既存のメディアクエリの閉じカッコなどがあれば、その周辺で構いません */
 </style>
 """, unsafe_allow_html=True)
 
