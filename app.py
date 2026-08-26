@@ -865,30 +865,31 @@ st.markdown("""
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: wrap !important; /* nowrapからwrapに変更 */
+            flex-wrap: wrap !important;
             gap: 10px !important;
             width: 100% !important;
             box-sizing: border-box !important;
         }
         
-        /* 2. カラムを画面の半分ずつに配置（隙間を考慮して横幅を計算） */
-        div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            /* gapの10pxを考慮し、ちょうど半分(50% - 5px)になるように指定 */
+        /* 2. セレクトボックスを含まない通常カラムを画面の半分ずつに配置 */
+        div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) > div[data-testid="column"] {
             width: calc(50% - 5px) !important;
-            min-width: 120px !important; /* ボタンが潰れないための最低幅（これ以下なら改行される） */
+            min-width: 120px !important;
             flex: 1 1 auto !important;
             box-sizing: border-box !important;
         }
 
-        /* ★ここを追加：セレクトボックスが含まれる横並びブロックはスマホで縦並びにする */
+        /* 3. セレクトボックスが含まれる横並びブロックはスマホで縦並びにする */
         div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) {
             flex-direction: column !important;
         }
         div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) > div[data-testid="column"] {
             width: 100% !important;
+            min-width: 100% !important;
+            box-sizing: border-box !important;
         }
 
-        /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
+        /* 4. 1行目（問題情報 と 次へボタン）の特例割合 */
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
             flex: 1.8 1 auto !important;
             width: auto !important;
@@ -898,17 +899,7 @@ st.markdown("""
             width: auto !important;
         }
 
-        /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
-            flex: 1.8 1 auto !important;
-            width: auto !important;
-        }
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
-            flex: 1.2 1 auto !important;
-            width: auto !important;
-        }
-
-        /* 4. 中の文字に引っ張られてボタンが巨大化するのを防ぐ */
+        /* 5. 中の文字に引っ張られてボタンが巨大化するのを防ぐ */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
             height: 46px !important;
