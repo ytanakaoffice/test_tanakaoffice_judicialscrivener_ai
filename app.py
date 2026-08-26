@@ -859,39 +859,53 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* Force horizontal layout for ALL columns in main container */
+        /* スマホでもカラムを横並びに強制し、画面内に収める */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             gap: 8px !important;
             width: 100% !important;
-        }
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            width: 50% !important;
-            min-width: 0 !important;
-            flex: 1 1 50% !important;
+            box-sizing: border-box !important;
         }
         
-        /* Adjust the first row (Info and Next button) */
+        /* すべてのカラムを約50%ずつに固定 */
+        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+            width: calc(50% - 4px) !important;
+            min-width: calc(50% - 4px) !important;
+            max-width: calc(50% - 4px) !important;
+            flex: 1 1 calc(50% - 4px) !important;
+            overflow: hidden !important;
+        }
+        
+        /* 1行目（問題情報 と 次へボタン）の比率調整 */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(1) {
-            width: 65% !important;
-            flex: 1 1 65% !important;
+            width: calc(65% - 4px) !important;
+            min-width: calc(65% - 4px) !important;
+            max-width: calc(65% - 4px) !important;
+            flex: 1 1 calc(65% - 4px) !important;
         }
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(2) {
-            width: 35% !important;
-            flex: 1 1 35% !important;
+            width: calc(35% - 4px) !important;
+            min-width: calc(35% - 4px) !important;
+            max-width: calc(35% - 4px) !important;
+            flex: 1 1 calc(35% - 4px) !important;
         }
 
-        /* Adjust button sizes for mobile */
+        /* ボタンが枠からはみ出さないようにする */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
-            height: 50px !important;
+            height: 48px !important;
             font-size: 0.95rem !important;
             border-radius: 8px !important;
             width: 100% !important;
-            padding: 0 4px !important;
+            max-width: 100% !important;
+            padding: 0 2px !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }
-        /* Make the top right toggle & next buttons smaller */
+        
+        /* Toggleや一部のボタンの微調整 */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) button,
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) div[data-testid="stToggle"] {
             height: 38px !important;
