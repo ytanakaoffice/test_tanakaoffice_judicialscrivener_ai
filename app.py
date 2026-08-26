@@ -808,79 +808,23 @@ if not st.session_state.get("user") and not st.session_state.get("trial_mode"):
 # ==========================================
 # C. メイン処理（問題演習・AIチャット）
 # ==========================================
+# 未ログイン時のカスタムCSSや、共通のCSSブロック内に以下を追加・調整してください
 st.markdown("""
 <style>
-    /* ラジオボタンのラベル（出題モード等）と選択肢を横並びにする */
-    div[data-testid="stRadio"] {
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        gap: 15px !important;
+    /* モバイル・セレクトボックスの文字色・背景色の干渉を防ぐ */
+    div[data-baseweb="select"] span {
+        color: #0F172A !important;
     }
-    div[data-testid="stRadio"] > label {
-        margin-bottom: 0 !important;
-        min-width: fit-content;
-    }
-
-    .stApp {
-        background-color: #f8f9fa;
-    }
-    .custom-question-card {
-        border-radius: 16px;
-        background-color: #ffffff;
-        border: 1px solid #e0e0e0;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        padding: 24px;
-        font-size: 1.4rem !important;
-        font-weight: 500 !important;
-        line-height: 1.8 !important;
-        letter-spacing: 0.1em !important;
-        color: #1a1a1a !important;
-        word-break: break-all;
-        margin-bottom: 12px;
-    }
-    .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
-    .header-img-bottom { display: block !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
-
-    /* Base big button styles for PC */
-    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(2) button,
-    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(3) button {
-        height: 60px !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
-        border-radius: 12px !important;
-        border: 1px solid #e2e8f0 !important;
-        color: #334155 !important;
-        background-color: #f8fafc !important;
-    }
-    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(2) button:hover,
-    [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(3) button:hover {
-        background-color: #e2e8f0 !important;
-        border-color: #cbd5e1 !important;
-        color: #0f172a !important;
-    }
-
+    
     @media (max-width: 768px) {
-        /* 無理な横並び・幅指定のCSSをすべて削除し、
-           Streamlit標準の「スマホ画面では安全に縦並び（改行）にする機能」に任せる */
-
-        /* ボタンの高さと文字サイズだけスマホ用に整える */
-        div[data-testid="stHorizontalBlock"] button {
+        /* スマホ画面でのカラムやボタンの改行・間隔を調整 */
+        [data-testid="stHorizontalBlock"] {
+            gap: 8px !important;
+        }
+        /* スマホでのボタンの視認性改善 */
+        button {
             width: 100% !important;
-            height: 50px !important;
-            padding: 0 !important;
-        }
-        div[data-testid="stHorizontalBlock"] button p {
-            font-size: 1rem !important;
-            margin: 0 !important;
-        }
-        
-        .header-img-top-hide-mobile { display: none !important; }
-        
-        .custom-question-card {
-            font-size: 1.15rem !important;
-            padding: 14px;
-            line-height: 1.5 !important;
+            white-space: nowrap !important;
         }
     }
 </style>
@@ -1312,7 +1256,9 @@ if menu == "年度別":
 
                     with ui_actions:
                         
-                        col_audio, col_bm = st.columns(2)
+                        # 例: スマホ対応を考慮したカラム分割の調整
+                        # 画面幅が狭いスマホ等の場合は自動で縦に積む、またはパディングを最適化
+                        col_info, col_audio, col_bm = st.columns([2.5, 1.2, 1.2])
                         with col_audio:
                             if st.button("🔊 音声", key=f"btn_audio_y_{ptr}", use_container_width=True):
                                 q_file = get_audio_file_path("Q", q_num_val, limb_val)
@@ -1570,7 +1516,9 @@ elif menu == "科目別":
                                 
                     with ui_actions:
                         
-                        col_audio_c, col_bm_c = st.columns(2)
+                        # 例: スマホ対応を考慮したカラム分割の調整
+                        # 画面幅が狭いスマホ等の場合は自動で縦に積む、またはパディングを最適化
+                        col_info, col_audio, col_bm = st.columns([2.5, 1.2, 1.2])
                         with col_audio_c:
                             if st.button("🔊 音声", key=f"btn_audio_c_{ptr_c}", use_container_width=True):
                                 q_file = get_audio_file_path("Q", q_num_val, limb_val)
@@ -1834,7 +1782,9 @@ elif menu == "付箋問題":
 
                         with ui_actions:
                             
-                            col_audio_bm, col_bm_bm = st.columns(2)
+                            # 例: スマホ対応を考慮したカラム分割の調整
+                            # 画面幅が狭いスマホ等の場合は自動で縦に積む、またはパディングを最適化
+                            col_info, col_audio, col_bm = st.columns([2.5, 1.2, 1.2])
                             with col_audio_bm:
                                 if st.button("🔊 音声", key=f"btn_audio_bm_{ptr_bm}", use_container_width=True):
                                     q_file = get_audio_file_path("Q", q_num_val, limb_val)
