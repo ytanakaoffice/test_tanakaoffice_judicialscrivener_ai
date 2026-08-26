@@ -821,7 +821,6 @@ st.markdown("""
         background-color: #f8f9fa;
     }
 
-
     .custom-question-card {
         border-radius: 16px;
         background-color: #ffffff;
@@ -836,6 +835,7 @@ st.markdown("""
         word-break: break-all;
         margin-bottom: 12px;
     }
+
     .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
     .header-img-bottom { display: block !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
 
@@ -882,31 +882,23 @@ st.markdown("""
             box-sizing: border-box !important;
         }
 
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
-                flex: none !important;
-                width: 100% !important;
-            }
-            div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
-                flex: none !important;
-                width: 100% !important;
-            }
-            /* 念のため文字色も確実に黒になるよう指定 */
-            div[data-baseweb="select"] * {
-                color: #0F172A !important;
-            }
+        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"] {
+            flex: none !important;
+            width: 100% !important;
+        }
 
         div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) {
-                width: 100% !important;
-                height: 46px !important;
-                padding: 0 !important;
-            }
-            div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) p {
-                font-size: 0.9rem !important;
-                white-space: nowrap !important;
-                overflow: hidden !important;
-                text-overflow: ellipsis !important;
-                margin: 0 !important;
-            }
+            width: 100% !important;
+            height: 46px !important;
+            padding: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) p {
+            font-size: 0.9rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            margin: 0 !important;
+        }
         
         .header-img-top-hide-mobile { display: none !important; }
         
@@ -915,31 +907,34 @@ st.markdown("""
             padding: 14px;
             line-height: 1.5 !important;
         }
-    }
-    /* 👇👇👇 スマホのプルダウン文字消失を全方位から強制ブロック 👇👇👇 */
-        @media (max-width: 768px) {
-            div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-                background-color: #ffffff !important;
-            }
-            div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
-                color: #0F172A !important;
-            }
-            div[data-testid="stSelectbox"] div[class*="singleValue"] {
-                display: block !important;
-                min-width: 150px !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-            }
-            div[data-testid="stSelectbox"] div[role="combobox"] {
-                padding: 8px 14px !important;
-                min-height: 46px !important;
-                display: flex !important;
-                align-items: center !important;
-                justify-content: space-between !important;
-            }
+
+        /* 👇👇👇 プルダウンの文字消失を100%防ぐ最終設定 👇👇👇 */
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+            background-color: #f1f5f9 !important;
+            display: flex !important;
+        }
+        div[data-testid="stSelectbox"] div[role="combobox"] {
+            justify-content: space-between !important;
+            padding: 0 14px !important;
+            min-height: 42px !important;
+        }
+        div[data-testid="stSelectbox"] div[class*="singleValue"] {
+            display: block !important;
+            color: #0F172A !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            flex-grow: 1 !important;
+            text-align: left !important;
+        }
+        div[data-testid="stSelectbox"] input {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 1px !important;
+            min-width: 1px !important;
+            flex-grow: 0 !important;
         }
         /* 👆👆👆 追加ここまで 👆👆👆 */
-    } /* ←既存のメディアクエリの閉じカッコなどがあれば、その周辺で構いません */
+    }
 </style>
 """, unsafe_allow_html=True)
 
