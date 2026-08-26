@@ -907,33 +907,6 @@ st.markdown("""
             padding: 14px;
             line-height: 1.5 !important;
         }
-
-        /* 👇👇👇 プルダウンの文字消失を100%防ぐ最終設定 👇👇👇 */
-        div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-            background-color: #f1f5f9 !important;
-            display: flex !important;
-        }
-        div[data-testid="stSelectbox"] div[role="combobox"] {
-            justify-content: space-between !important;
-            padding: 0 14px !important;
-            min-height: 42px !important;
-        }
-        div[data-testid="stSelectbox"] div[class*="singleValue"] {
-            display: block !important;
-            color: #0F172A !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            flex-grow: 1 !important;
-            text-align: left !important;
-        }
-        div[data-testid="stSelectbox"] input {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 1px !important;
-            min-width: 1px !important;
-            flex-grow: 0 !important;
-        }
-        /* 👆👆👆 追加ここまで 👆👆👆 */
     }
 </style>
 """, unsafe_allow_html=True)
