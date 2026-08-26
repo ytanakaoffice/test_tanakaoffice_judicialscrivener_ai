@@ -861,37 +861,32 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* 1. スマホで絶対に横並びをキープ（改行させない） */
+        /* 1. 横スクロールを絶対に発生させないよう全体を保護 */
+        [data-testid="stMainBlockContainer"] {
+            overflow-x: hidden !important;
+        }
+
+        /* 2. 要素を横並びにしつつ、入り切らない場合のみ安全に改行 */
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: nowrap !important; /* wrap（改行）を禁止 */
+            flex-wrap: wrap !important;
             gap: 10px !important;
             width: 100% !important;
         }
         
-        /* 2. Streamlit特有の「スマホ画面だと強制100%幅になる」仕様を完全無効化 */
+        /* 3. 各カラムを「画面のちょうど半分」に計算して配置（隙間の10pxも計算に含める） */
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            width: calc(50% - 5px) !important;
-            min-width: 0 !important; /* 最重要：これを0にしないと横並びが崩れる */
-            flex: 1 1 0% !important;
-            box-sizing: border-box !important;
+            flex: 1 1 calc(50% - 5px) !important;
+            min-width: calc(50% - 5px) !important; /* 年度や問題番号が潰れて消えるのを防ぐ！ */
+            max-width: 100% !important;
         }
 
-        /* 3. 1行目（問題情報 と 次へボタン）の割合を微調整 */
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
-            flex: 1.8 1 0% !important;
-        }
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
-            flex: 1.2 1 0% !important;
-        }
-
-        /* 4. ボタンのテキストが長すぎても枠内に収める（はみ出さない） */
+        /* 4. ボタンのテキストが大きすぎてレイアウトを壊すのを防ぐ */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
-            height: 46px !important;
+            height: 48px !important;
             padding: 0 4px !important;
-            min-width: 0 !important;
         }
         div[data-testid="stHorizontalBlock"] button p {
             font-size: 0.9rem !important;
