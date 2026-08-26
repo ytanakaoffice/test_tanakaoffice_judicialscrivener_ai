@@ -709,7 +709,7 @@ if not st.session_state.get("user") and not st.session_state.get("trial_mode"):
                 margin-bottom: -10px !important;
             }}
             
-            input {{
+            div[data-testid="stTextInput"] input {{
                 padding: 6px !important;
                 font-size: 0.9rem !important;
             }}
@@ -836,7 +836,7 @@ st.markdown("""
         color: #0F172A !important;
     }
     /* 👆👆👆 ここまで追加 👆👆👆 */
-    
+
     .custom-question-card {
         border-radius: 16px;
         background-color: #ffffff;
