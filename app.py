@@ -864,19 +864,14 @@ st.markdown("""
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             gap: 6px !important;
+            width: 100% !important;
+            overflow: hidden !important;
         }
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            width: auto !important;
+            width: 0 !important;
             min-width: 0 !important;
             flex: 1 1 0% !important;
-        }
-        
-        /* Adjust the first row (Info and Next button) to 70:30 ratio */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(1) {
-            flex: 2 1 0% !important;
-        }
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(2) {
-            flex: 1 1 0% !important;
+            overflow: hidden !important;
         }
 
         /* Adjust button sizes for mobile */
