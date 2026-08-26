@@ -1996,7 +1996,7 @@ elif menu == "過去問聞き流し":
             target_rows = df[df["分野"] == sel_cat].reset_index(drop=True)
 
     if not target_rows.empty:
-        batch_size = 30
+        batch_size = 25
         total_questions = len(target_rows)
         total_batches = (total_questions + batch_size - 1) // batch_size  # ← ★この1行を追加！
 
