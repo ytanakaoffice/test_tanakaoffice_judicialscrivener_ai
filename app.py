@@ -2001,6 +2001,13 @@ elif menu == "過去問聞き流し":
             else:
                 batch_options.append(batch_str + " 🔒[有料会員限定]")
 
+        # ▼▼▼ 追加する同期処理 ▼▼▼
+        if "selected_batch_str" in st.session_state:
+            expected_str = batch_options[st.session_state.listen_batch_page]
+            if st.session_state.selected_batch_str != expected_str:
+                st.session_state.selected_batch_str = expected_str
+        # ▲▲▲ ここまで ▲▲▲
+
         def sync_batch_selection():
             try:
                 st.session_state.listen_batch_page = batch_options.index(st.session_state.selected_batch_str)
