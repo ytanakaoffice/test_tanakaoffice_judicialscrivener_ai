@@ -880,6 +880,24 @@ st.markdown("""
             box-sizing: border-box !important;
         }
 
+        /* ★ここを追加：セレクトボックスが含まれる横並びブロックはスマホで縦並びにする */
+        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) {
+            flex-direction: column !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) > div[data-testid="column"] {
+            width: 100% !important;
+        }
+
+        /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
+        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
+            flex: 1.8 1 auto !important;
+            width: auto !important;
+        }
+        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
+            flex: 1.2 1 auto !important;
+            width: auto !important;
+        }
+
         /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
             flex: 1.8 1 auto !important;
