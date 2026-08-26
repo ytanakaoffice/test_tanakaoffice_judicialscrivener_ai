@@ -861,40 +861,37 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* 1. スマホで横並びをキープしつつ、はみ出る場合は改行（wrap）を許可する */
+        /* 1. スマホで絶対に横並びをキープ（改行させない） */
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: wrap !important; /* nowrapからwrapに変更 */
+            flex-wrap: nowrap !important; /* wrap（改行）を禁止 */
             gap: 10px !important;
             width: 100% !important;
-            box-sizing: border-box !important;
         }
         
-        /* 2. カラムを画面の半分ずつに配置（隙間を考慮して横幅を計算） */
+        /* 2. Streamlit特有の「スマホ画面だと強制100%幅になる」仕様を完全無効化 */
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            /* gapの10pxを考慮し、ちょうど半分(50% - 5px)になるように指定 */
             width: calc(50% - 5px) !important;
-            min-width: 120px !important; /* ボタンが潰れないための最低幅（これ以下なら改行される） */
-            flex: 1 1 auto !important;
+            min-width: 0 !important; /* 最重要：これを0にしないと横並びが崩れる */
+            flex: 1 1 0% !important;
             box-sizing: border-box !important;
         }
 
-        /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
+        /* 3. 1行目（問題情報 と 次へボタン）の割合を微調整 */
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
-            flex: 1.8 1 auto !important;
-            width: auto !important;
+            flex: 1.8 1 0% !important;
         }
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
-            flex: 1.2 1 auto !important;
-            width: auto !important;
+            flex: 1.2 1 0% !important;
         }
 
-        /* 4. 中の文字に引っ張られてボタンが巨大化するのを防ぐ */
+        /* 4. ボタンのテキストが長すぎても枠内に収める（はみ出さない） */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
             height: 46px !important;
-            padding: 0 !important;
+            padding: 0 4px !important;
+            min-width: 0 !important;
         }
         div[data-testid="stHorizontalBlock"] button p {
             font-size: 0.9rem !important;
