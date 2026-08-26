@@ -383,8 +383,10 @@ def get_header_image_base64():
     return ""
 
 def render_header_image(position="top"):
-    if st.session_state.get("fast_mode", False) and position == "bottom":
+    # ★軽量化モード時は一切のタイトル画像を表示しない
+    if st.session_state.get("fast_mode", False):
         return
+        
     b64 = get_header_image_base64()
     if b64:
         if position == "top":
@@ -859,55 +861,49 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        * {
-            box-sizing: border-box !important;
-        }
-
-        /* 横並びを絶対に維持 */
+        /* 1. スマホで絶対に横並びをキープ */
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
+            gap: 10px !important;
             width: 100% !important;
-            gap: 6px !important;
         }
         
-        /* スマホ時の100%強制を無効化し、等分（50%ずつ）にする */
+        /* 2. カラムを絶対に画面の半分ずつ（50%）に固定 */
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
             width: 50% !important;
             min-width: 0 !important;
-            max-width: 50% !important;
-            flex: 1 1 50% !important;
-            padding: 0 !important;
+            flex: 1 1 0% !important;
         }
 
-        /* 「問題番号・正答率」の表示部分は少し広く、次へボタンのエリアは少し狭くする特例 */
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stToggle"]) > div[data-testid="column"]:nth-child(1) {
-            width: 65% !important;
-            max-width: 65% !important;
+        /* 3. 1行目（問題情報 と 次へボタン）の特例割合 */
+        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
             flex: 1.8 1 0% !important;
         }
-        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stToggle"]) > div[data-testid="column"]:nth-child(2) {
-            width: 35% !important;
-            max-width: 35% !important;
+        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
             flex: 1.2 1 0% !important;
         }
 
-        /* ボタンが枠からはみ出さないようにテキストを省略する */
+        /* 4. 中の文字に引っ張られてボタンが巨大化するのを防ぐ魔法 */
         div[data-testid="stHorizontalBlock"] button {
-            max-width: 100% !important;
-            height: 48px !important;
+            width: 100% !important;
+            height: 46px !important;
+            padding: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] button p {
             font-size: 0.9rem !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
-            padding: 0 4px !important;
+            margin: 0 !important;
         }
-
+        
         .header-img-top-hide-mobile { display: none !important; }
+        
         .custom-question-card {
             font-size: 1.15rem !important;
-            padding: 14px !important;
+            padding: 14px;
             line-height: 1.5 !important;
         }
     }
@@ -1034,7 +1030,7 @@ def reset_inline_chat():
 MAX_CHAT = 30 if is_premium else 2
 
 def render_ai_teacher():
-    # ★軽量化モードONなら、画像を一切読み込まない
+    # ★軽量化モードONなら、画像を一切読み込まず文字だけ表示する
     if st.session_state.get("fast_mode", False):
         with st.sidebar:
             st.title("田中式 司法書士一問一答")
@@ -1052,14 +1048,12 @@ def render_ai_teacher():
     img_path = image_map.get(current_state, image_map["normal"])
     
     with st.sidebar:
-        # サイドバーの一番上にタイトル画像を表示
         title_path = "images/1_title.png" if os.path.exists("images/1_title.png") else "1_title.png"
         if os.path.exists(title_path):
             st.image(title_path, use_container_width=True)
         else:
             st.title("田中式 司法書士一問一答")
             
-        # 美少女画像を表示した【後】に文字を配置するよう順番を入れ替え
         if os.path.exists(img_path):
             st.image(img_path, use_container_width=True)
         else:
@@ -1900,14 +1894,14 @@ elif menu == "付箋問題":
                                     with col_ok:
                                         st.success("正解です！")
                                     with col_img:
-                                        if os.path.exists("images/1_teacher_happy_o.png"):
+                                        if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_happy_o.png"):
                                             st.image("images/1_teacher_happy_o.png", width=45)
                                 else:
                                     col_err, col_img = st.columns([5, 1])
                                     with col_err:
                                         st.error(f"不正解... （正解は {correct} です）")
                                     with col_img:
-                                        if os.path.exists("images/1_teacher_sad_x.png"):
+                                        if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_sad_x.png"):
                                             st.image("images/1_teacher_sad_x.png", width=45)
                                     
                                 st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
