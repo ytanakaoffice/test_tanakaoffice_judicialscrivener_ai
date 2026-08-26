@@ -365,7 +365,6 @@ def execute_account_deletion(user_email, user_id):
 # 3. ユーティリティ・ダイアログ・Paywall
 # ==========================================
 @st.cache_data
-@st.cache_data
 def get_image_base64(path):
     try:
         with open(path, "rb") as f:
@@ -383,7 +382,6 @@ def get_header_image_base64():
     return ""
 
 def render_header_image(position="top"):
-    # ★軽量化モード時は一切のタイトル画像を表示しない
     if st.session_state.get("fast_mode", False):
         return
         
@@ -642,7 +640,6 @@ if st.session_state.get("user"):
     user_email = st.session_state["user"]["email"]
     user_id = st.session_state["user"]["id"]
     
-    # 毎回DBに問い合わせると画面遷移（次の問題へ等）が遅くなるため、セッションにキャッシュする
     if "is_premium" not in st.session_state:
         ensure_subscription_record(user_email, user_id)
         st.session_state["is_premium"] = check_access(user_email)
@@ -737,7 +734,6 @@ if not st.session_state.get("user") and not st.session_state.get("trial_mode"):
     </style>
     """, unsafe_allow_html=True)
 
-    # 無料お試しモード用ボタン（カードの一番上に配置）
     st.markdown("<div style='margin-bottom: 12px;'>", unsafe_allow_html=True)
     if st.button("✨ 無料お試しモードで始める ✨", type="primary", use_container_width=True, key="btn_free_trial"):
         st.session_state["trial_mode"] = True
@@ -810,7 +806,6 @@ if not st.session_state.get("user") and not st.session_state.get("trial_mode"):
 # ==========================================
 st.markdown("""
 <style>
-    /* ラジオボタンのラベル（出題モード等）と選択肢を横並びにする */
     div[data-testid="stRadio"] {
         display: flex !important;
         flex-direction: row !important;
@@ -842,7 +837,6 @@ st.markdown("""
     .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
     .header-img-bottom { display: block !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
 
-    /* Base big button styles for PC */
     [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(2) button,
     [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(3) button {
         height: 60px !important;
@@ -861,7 +855,6 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* 1. スマホで横並びをキープしつつ、はみ出る場合は改行（wrap）を許可する */
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
@@ -871,7 +864,6 @@ st.markdown("""
             box-sizing: border-box !important;
         }
         
-        /* 2. セレクトボックスを含まない通常カラムを画面の半分ずつに配置 */
         div[data-testid="stHorizontalBlock"]:not(:has(div[data-testid="stSelectbox"])) > div[data-testid="column"] {
             width: calc(50% - 5px) !important;
             min-width: 120px !important;
@@ -879,7 +871,6 @@ st.markdown("""
             box-sizing: border-box !important;
         }
 
-        /* 3. セレクトボックスが含まれる横並びブロックはスマホで縦並びにする */
         div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) {
             flex-direction: column !important;
         }
@@ -889,7 +880,6 @@ st.markdown("""
             box-sizing: border-box !important;
         }
 
-        /* 4. 1行目（問題情報 と 次へボタン）の特例割合 */
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
             flex: 1.8 1 auto !important;
             width: auto !important;
@@ -899,7 +889,6 @@ st.markdown("""
             width: auto !important;
         }
 
-        /* 5. 中の文字に引っ張られてボタンが巨大化するのを防ぐ */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
             height: 46px !important;
@@ -1007,7 +996,6 @@ def load_data():
 
 df = load_data()
 
-# 状態初期化
 if "inline_messages" not in st.session_state:
     st.session_state.inline_messages = []
 if "inline_conv_id" not in st.session_state:
@@ -1021,7 +1009,6 @@ if "inline_waiting" not in st.session_state:
 if "main_waiting" not in st.session_state:
     st.session_state.main_waiting = False
 
-# 付箋データの初期化
 if "user_bookmarks" not in st.session_state:
     st.session_state.user_bookmarks = get_user_bookmarks(user_id) if is_logged_in else []
 
@@ -1040,11 +1027,9 @@ def reset_inline_chat():
     st.session_state.inline_conv_id = ""
     st.session_state.inline_waiting = False
 
-# AI制限チャット上限設定（有料=30、無料=2）
 MAX_CHAT = 30 if is_premium else 2
 
 def render_ai_teacher():
-    # ★軽量化モードONなら、画像を一切読み込まず文字だけ表示する
     if st.session_state.get("fast_mode", False):
         with st.sidebar:
             st.title("田中式 司法書士一問一答")
@@ -1133,7 +1118,6 @@ def render_inline_chat(row):
 render_ai_teacher()
 st.sidebar.title("メニュー")
 
-# ログイン・プレミアム状態表示エリア
 if not is_logged_in:
     st.sidebar.info("👤 現在無料お試しモードです\n(令和8年のみ閲覧・AIチャット2回可)")
     if st.sidebar.button("ログイン / 新規登録", type="primary", use_container_width=True):
@@ -1158,7 +1142,6 @@ else:
 
 st.sidebar.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
 
-# アカウント管理メニュー
 if is_logged_in:
     col_row1_left, col_row1_right = st.sidebar.columns(2)
     with col_row1_left:
@@ -1212,7 +1195,6 @@ if menu == "年度別":
             year_val = 1 if "元" in s else (int(re.search(r'(\d+)年', s).group(1)) if re.search(r'(\d+)年', s) else 0)
             return (era_val, year_val, s)
 
-        # ★ここでreverse=Trueにして降順に設定
         sessions = sorted(list(set([extract_session(q) for q in all_questions])), key=session_sort_key, reverse=True)
         
         ui_top = st.container()
@@ -1229,6 +1211,8 @@ if menu == "年度別":
                 selected_display_session = st.selectbox("演習する年度・回を選んでください", display_sessions, key="y_session")
                 selected_session = selected_display_session.replace(" 🔒[有料会員限定]", "")
                 is_locked_session = "🔒" in selected_display_session
+                
+            y_q_placeholder = col_question.empty()
 
         session_rows = df[df["問題番号"].astype(str).str.startswith(selected_session)].reset_index(drop=True)
 
@@ -1267,13 +1251,12 @@ if menu == "年度別":
                     current_target_idx = order[ptr]
                     q_options = [f"第 {i+1} 問" for i in range(len(session_rows))]
 
-                    with ui_controls:
-                        with col_question:
-                            selected_q = st.selectbox(
-                                "現在の問題（選択して移動も可能）:", 
-                                q_options, 
-                                index=current_target_idx
-                            )
+                    with y_q_placeholder:
+                        selected_q = st.selectbox(
+                            "現在の問題（選択して移動も可能）:", 
+                            q_options, 
+                            index=current_target_idx
+                        )
                     
                     target_start_idx = int(selected_q.replace("第 ", "").replace(" 問", "")) - 1
                     if target_start_idx != current_target_idx:
@@ -1448,7 +1431,6 @@ if menu == "年度別":
                             st.rerun()
     
 
-
 # ==========================================
 # ルート2：科目別
 # ==========================================
@@ -1468,6 +1450,8 @@ elif menu == "科目別":
             col_cat, col_question_c = st.columns(2)
             with col_cat:
                 selected_cat = st.selectbox("科目を選択してください", categories, key="c_cat")
+                
+            c_q_placeholder = col_question_c.empty()
 
         cat_rows = df[df["分野"] == selected_cat].reset_index(drop=True)
 
@@ -1509,13 +1493,12 @@ elif menu == "科目別":
                     else:
                         q_options_c.append(f"第 {i+1} 問 🔒[有料会員限定]")
 
-                with ui_controls:
-                    with col_question_c:
-                        selected_q_c = st.selectbox(
-                            "現在の問題（選択して移動も可能）:", 
-                            q_options_c, 
-                            index=current_target_idx_c
-                        )
+                with c_q_placeholder:
+                    selected_q_c = st.selectbox(
+                        "現在の問題（選択して移動も可能）:", 
+                        q_options_c, 
+                        index=current_target_idx_c
+                    )
                 
                 target_start_idx_c = int(selected_q_c.replace(" 🔒[有料会員限定]", "").replace("第 ", "").replace(" 問", "")) - 1
                 if target_start_idx_c != current_target_idx_c:
@@ -1705,8 +1688,6 @@ elif menu == "科目別":
                         reset_inline_chat()
                         st.rerun()
 
-
-
 # ==========================================
 # ルート2.5：付箋問題
 # ==========================================
@@ -1741,6 +1722,7 @@ elif menu == "付箋問題":
                 with ui_controls:
                     st.markdown("---")
                     mode_bm = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="bm_mode")
+                    bm_q_placeholder = st.empty()
 
                 if (
                     st.session_state.get("bm_current_mode") != mode_bm
@@ -1775,7 +1757,7 @@ elif menu == "付箋問題":
                         else:
                             q_options_bm.append(f"第 {i+1} 問 🔒[有料会員限定]")
 
-                    with ui_controls:
+                    with bm_q_placeholder:
                         selected_q_bm = st.selectbox(
                             "現在の問題（選択して移動も可能）:", 
                             q_options_bm, 
@@ -1967,8 +1949,6 @@ elif menu == "付箋問題":
                             reset_inline_chat()
                             st.rerun()
 
-
-
 # ==========================================
 # ルート3：過去問聞き流し
 # ==========================================
@@ -2026,7 +2006,6 @@ elif menu == "過去問聞き流し":
             end_idx = min((i + 1) * batch_size, total_questions)
             batch_rows = target_rows.iloc[start_idx:end_idx]
             
-            # グループ内に無料対象（令和8年）が含まれているか確認
             has_free_question = any("令和8年" in str(q) for q in batch_rows["問題番号"])
             
             batch_str = f"第 {start_idx + 1} 〜 {end_idx} 問目 (グループ {i+1}/{total_batches})"
@@ -2073,7 +2052,6 @@ elif menu == "過去問聞き流し":
                     q_num_val = str(row.get("問題番号", ""))
                     limb_val = str(row.get("肢", ""))
                     
-                    # 有料会員でない かつ 令和8年を含まない問題はロック
                     if not is_premium and "令和8年" not in q_num_val:
                         playlist.append({
                             "title": f"【問題】{q_num_val} 肢{limb_val} 🔒",
