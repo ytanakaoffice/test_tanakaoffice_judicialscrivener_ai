@@ -365,6 +365,7 @@ def execute_account_deletion(user_email, user_id):
 # 3. ユーティリティ・ダイアログ・Paywall
 # ==========================================
 @st.cache_data
+@st.cache_data
 def get_image_base64(path):
     try:
         with open(path, "rb") as f:
@@ -372,11 +373,25 @@ def get_image_base64(path):
     except FileNotFoundError:
         return ""
 
-def render_header_image():
-    if os.path.exists("images/1_title.png"):
-        st.image("images/1_title.png", use_container_width=True)
-    elif os.path.exists("1_title.png"):
-        st.image("1_title.png", use_container_width=True)
+@st.cache_data
+def get_header_image_base64():
+    path = "images/1_title.png" if os.path.exists("images/1_title.png") else "1_title.png"
+    if os.path.exists(path):
+        import base64
+        with open(path, "rb") as f:
+            return f"data:image/png;base64,{base64.b64encode(f.read()).decode()}"
+    return ""
+
+def render_header_image(position="top"):
+    b64 = get_header_image_base64()
+    if b64:
+        if position == "top":
+            class_name = "header-img-top-hide-mobile"
+        elif position == "top-always":
+            class_name = "header-img-top-always"
+        else:
+            class_name = "header-img-bottom"
+        st.markdown(f'<img src="{b64}" class="{class_name}">', unsafe_allow_html=True)
     else:
         st.title("田中式 司法書士一問一答")
 
@@ -808,7 +823,25 @@ st.markdown("""
         word-break: break-all;
         margin-bottom: 12px;
     }
+    .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
+    .header-img-bottom { display: none !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
+    div[data-testid="column"] button {
+        height: 70px !important;
+        font-size: 1.4rem !important;
+        font-weight: 700 !important;
+        border-radius: 12px !important;
+        border: 2px solid #e2e8f0 !important;
+        color: #334155 !important;
+        background-color: #f8fafc !important;
+    }
+    div[data-testid="column"] button:hover {
+        background-color: #e2e8f0 !important;
+        border-color: #cbd5e1 !important;
+        color: #0f172a !important;
+    }
     @media (max-width: 768px) {
+        .header-img-top-hide-mobile { display: none !important; }
+        .header-img-bottom { display: block !important; }
         .custom-question-card {
             font-size: 1.2rem !important;
             padding: 16px;
@@ -1199,16 +1232,10 @@ if menu == "年度別":
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.y_answered:
-                            clicked = clickable_images(
-                                [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                                if os.path.exists("images/btn_o.png") else
-                                [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                                titles=["正解", "不正解"],
-                                div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                img_style={"width": "120px", "cursor": "pointer"},
-                                key=f"img_btn_y_{ptr}"
-                            )
-
+                            col_btn_o, col_btn_x = st.columns(2)
+                            clicked_o = col_btn_o.button("〇 正解", key=f"y_o_{ptr}", use_container_width=True)
+                            clicked_x = col_btn_x.button("✖ 不正解", key=f"y_x_{ptr}", use_container_width=True)
+                            clicked = 0 if clicked_o else (1 if clicked_x else -1)
                             if clicked > -1:
                                 st.session_state.y_answered = True
                                 correct = str(row.get("正誤", "")).strip()
@@ -1319,6 +1346,8 @@ if menu == "年度別":
                             st.session_state.y_active_audio = None
                             reset_inline_chat()
                             st.rerun()
+    
+    render_header_image("bottom")
 
 # ==========================================
 # ルート2：科目別
@@ -1448,16 +1477,10 @@ elif menu == "科目別":
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.c_answered:
-                            clicked_c = clickable_images(
-                                [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                                if os.path.exists("images/btn_o.png") else
-                                [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                                titles=["正解", "不正解"],
-                                div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                img_style={"width": "120px", "cursor": "pointer"},
-                                key=f"img_btn_c_{ptr_c}"
-                            )
-
+                            col_btn_o_c, col_btn_x_c = st.columns(2)
+                            clicked_o_c = col_btn_o_c.button("〇 正解", key=f"c_o_{ptr_c}", use_container_width=True)
+                            clicked_x_c = col_btn_x_c.button("✖ 不正解", key=f"c_x_{ptr_c}", use_container_width=True)
+                            clicked_c = 0 if clicked_o_c else (1 if clicked_x_c else -1)
                             if clicked_c > -1:
                                 st.session_state.c_answered = True
                                 correct = str(row.get("正誤", "")).strip()
@@ -1703,16 +1726,10 @@ elif menu == "付箋問題":
                             st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                             if not st.session_state.bm_answered:
-                                clicked_bm = clickable_images(
-                                    [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                                    if os.path.exists("images/btn_o.png") else
-                                    [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                                    titles=["正解", "不正解"],
-                                    div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                    img_style={"width": "120px", "cursor": "pointer"},
-                                    key=f"img_btn_bm_{ptr_bm}"
-                                )
-
+                                col_btn_o_bm, col_btn_x_bm = st.columns(2)
+                                clicked_o_bm = col_btn_o_bm.button("〇 正解", key=f"bm_o_{ptr_bm}", use_container_width=True)
+                                clicked_x_bm = col_btn_x_bm.button("✖ 不正解", key=f"bm_x_{ptr_bm}", use_container_width=True)
+                                clicked_bm = 0 if clicked_o_bm else (1 if clicked_x_bm else -1)
                                 if clicked_bm > -1:
                                     st.session_state.bm_answered = True
                                     correct = str(row.get("正誤", "")).strip()
@@ -1826,7 +1843,7 @@ elif menu == "付箋問題":
 # ルート3：過去問聞き流し
 # ==========================================
 elif menu == "過去問聞き流し":
-    render_header_image()
+    render_header_image("top-always")
     st.subheader("🎧 過去問連続聞き流しモード")
 
     listen_type = st.radio("絞り込み方法を選択", ["年度別", "科目別"], horizontal=True, key="listen_type_radio")
