@@ -861,39 +861,26 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* 1. 横スクロールを絶対に発生させないよう全体を保護 */
-        [data-testid="stMainBlockContainer"] {
-            overflow-x: hidden !important;
-        }
-
-        /* 2. 要素を横並びにしつつ、入り切らない場合のみ安全に改行 */
+        /* スマホでは無理な横並びをやめ、自然に改行（縦並び）させる */
         div[data-testid="stHorizontalBlock"] {
             display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: wrap !important;
+            flex-direction: column !important; /* 縦並びに指定 */
             gap: 10px !important;
             width: 100% !important;
         }
         
-        /* 3. 各カラムを「画面のちょうど半分」に計算して配置（隙間の10pxも計算に含める） */
+        /* カラムの幅を100%にすることで、文字（年度など）が潰れるのを防ぐ */
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            flex: 1 1 calc(50% - 5px) !important;
-            min-width: calc(50% - 5px) !important; /* 年度や問題番号が潰れて消えるのを防ぐ！ */
+            width: 100% !important;
+            min-width: 100% !important;
             max-width: 100% !important;
         }
 
-        /* 4. ボタンのテキストが大きすぎてレイアウトを壊すのを防ぐ */
+        /* ボタンが画面外にはみ出さないよう横幅100%に固定 */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
             height: 48px !important;
-            padding: 0 4px !important;
-        }
-        div[data-testid="stHorizontalBlock"] button p {
-            font-size: 0.9rem !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            margin: 0 !important;
+            padding: 0 !important;
         }
         
         .header-img-top-hide-mobile { display: none !important; }
