@@ -1168,6 +1168,20 @@ if is_logged_in:
         section[data-testid="stSidebar"] button {
             white-space: nowrap !important;
         }
+        /* 👇👇👇 スマホブラウザが勝手に文字幅を0に潰すバグを強制ブロック 👇👇👇 */
+    @media (max-width: 768px) {
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+            color: #0F172A !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            flex-shrink: 0 !important; /* 文字幅が0に潰れるのを強制阻止 */
+        }
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] span {
+            min-width: 150px !important; /* 文字の表示領域を強制的に確保 */
+            display: inline-block !important;
+        }
+    }
+    /* 👆👆👆 追加ここまで 👆👆👆 */
     </style>
     """, unsafe_allow_html=True)
 
