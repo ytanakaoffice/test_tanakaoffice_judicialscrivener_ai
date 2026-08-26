@@ -1096,21 +1096,30 @@ if menu == "年度別":
         # ★ここでreverse=Trueにして降順に設定
         sessions = sorted(list(set([extract_session(q) for q in all_questions])), key=session_sort_key, reverse=True)
         
-        col_session, col_question = st.columns(2)
+        ui_top = st.container()
+        ui_result = st.container()
+        ui_actions = st.container()
+        ui_controls = st.container()
+        ui_extra = st.container()
 
-        with col_session:
-            display_sessions = [s if ("令和8年" in s or is_premium) else f"{s} 🔒[有料会員限定]" for s in sessions]
-            selected_display_session = st.selectbox("演習する年度・回を選んでください", display_sessions, key="y_session")
-            selected_session = selected_display_session.replace(" 🔒[有料会員限定]", "")
-            is_locked_session = "🔒" in selected_display_session
+        with ui_controls:
+            st.markdown("---")
+            col_session, col_question = st.columns(2)
+            with col_session:
+                display_sessions = [s if ("令和8年" in s or is_premium) else f"{s} 🔒[有料会員限定]" for s in sessions]
+                selected_display_session = st.selectbox("演習する年度・回を選んでください", display_sessions, key="y_session")
+                selected_session = selected_display_session.replace(" 🔒[有料会員限定]", "")
+                is_locked_session = "🔒" in selected_display_session
 
         session_rows = df[df["問題番号"].astype(str).str.startswith(selected_session)].reset_index(drop=True)
 
         if not session_rows.empty:
             if is_locked_session:
-                render_paywall()
+                with ui_controls:
+                    render_paywall()
             else:
-                mode = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="y_mode")
+                with ui_controls:
+                    mode = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="y_mode")
 
                 if (
                     st.session_state.get("y_current_session") != selected_session
@@ -1139,12 +1148,13 @@ if menu == "年度別":
                     current_target_idx = order[ptr]
                     q_options = [f"第 {i+1} 問" for i in range(len(session_rows))]
 
-                    with col_question:
-                        selected_q = st.selectbox(
-                            "現在の問題（選択して移動も可能）:", 
-                            q_options, 
-                            index=current_target_idx
-                        )
+                    with ui_controls:
+                        with col_question:
+                            selected_q = st.selectbox(
+                                "現在の問題（選択して移動も可能）:", 
+                                q_options, 
+                                index=current_target_idx
+                            )
                     
                     target_start_idx = int(selected_q.replace("第 ", "").replace(" 問", "")) - 1
                     if target_start_idx != current_target_idx:
@@ -1159,14 +1169,12 @@ if menu == "年度別":
                     row = session_rows.iloc[current_target_idx]
                     acc_rate = (st.session_state.y_correct_count / st.session_state.y_total_count * 100) if st.session_state.y_total_count > 0 else 0
 
-                    col_info, col_audio, col_bm = st.columns([3, 1, 1])
-
                     q_num_val = row.get("問題番号", "")
                     limb_val = row.get("肢", "")
                     q_key = f"{q_num_val}_{limb_val}"
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
-                    with col_info:
+                    with ui_top:
                         st.markdown(
                             f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
                             f'【 年度: {selected_session} 】 ( {ptr + 1} / {len(session_rows)} 問目 )<br>'
@@ -1174,126 +1182,130 @@ if menu == "年度別":
                             f'</div>',
                             unsafe_allow_html=True
                         )
+                        st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                        st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
-                    with col_audio:
-                        if st.button("🔊 音声", key=f"btn_audio_y_{ptr}", use_container_width=True):
-                            q_file = get_audio_file_path("Q", q_num_val, limb_val)
-                            if q_file:
-                                st.session_state.y_active_audio = q_file
+                        if not st.session_state.y_answered:
+                            clicked = clickable_images(
+                                [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                if os.path.exists("images/btn_o.png") else
+                                [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                titles=["正解", "不正解"],
+                                div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                img_style={"width": "120px", "cursor": "pointer"},
+                                key=f"img_btn_y_{ptr}"
+                            )
+
+                            if clicked > -1:
+                                st.session_state.y_answered = True
+                                correct = str(row.get("正誤", "")).strip()
+                                st.session_state.y_user_ans = "○" if clicked == 0 else "×"
+                                st.session_state.y_total_count += 1
+                                
+                                if st.session_state.y_user_ans == correct:
+                                    st.session_state.y_correct_count += 1
+                                    st.session_state.teacher_state = "happy"
+                                else:
+                                    st.session_state.teacher_state = "sad"
+                                st.rerun()
+
+                    with ui_actions:
+                        col_audio, col_bm = st.columns(2)
+                        with col_audio:
+                            if st.button("🔊 音声", key=f"btn_audio_y_{ptr}", use_container_width=True):
+                                q_file = get_audio_file_path("Q", q_num_val, limb_val)
+                                if q_file:
+                                    st.session_state.y_active_audio = q_file
+                                else:
+                                    st.session_state.y_active_audio = None
+                                    st.error("音声なし")
+
+                        with col_bm:
+                            if not is_logged_in:
+                                if st.button("🔖 付箋", key=f"bm_disabled_y_{ptr}", use_container_width=True):
+                                    st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
+                            elif is_bookmarked:
+                                if st.button("📌 解除", key=f"bm_remove_y_{ptr}", type="primary", use_container_width=True):
+                                    if remove_bookmark(user_id, q_key):
+                                        st.session_state.user_bookmarks.remove(q_key)
+                                        st.toast("付箋を外しました", icon="🗑️")
+                                        st.rerun()
                             else:
-                                st.session_state.y_active_audio = None
-                                st.error("音声なし")
+                                if st.button("🔖 付箋", key=f"bm_add_y_{ptr}", use_container_width=True):
+                                    if add_bookmark(user_id, q_key):
+                                        st.session_state.user_bookmarks.append(q_key)
+                                        st.toast("付箋を追加しました！", icon="📌")
+                                        st.rerun()
 
-                    with col_bm:
-                        if not is_logged_in:
-                            if st.button("🔖 付箋", key=f"bm_disabled_y_{ptr}", use_container_width=True):
-                                st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
-                        elif is_bookmarked:
-                            if st.button("📌 解除", key=f"bm_remove_y_{ptr}", type="primary", use_container_width=True):
-                                if remove_bookmark(user_id, q_key):
-                                    st.session_state.user_bookmarks.remove(q_key)
-                                    st.toast("付箋を外しました", icon="🗑️")
-                                    st.rerun()
-                        else:
-                            if st.button("🔖 付箋", key=f"bm_add_y_{ptr}", use_container_width=True):
-                                if add_bookmark(user_id, q_key):
-                                    st.session_state.user_bookmarks.append(q_key)
-                                    st.toast("付箋を追加しました！", icon="📌")
-                                    st.rerun()
-
-                    if st.session_state.get("y_active_audio"):
-                        render_no_download_audio(st.session_state.y_active_audio)
-
-                    st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
-                    st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
-
-                    if not st.session_state.y_answered:
-                        clicked = clickable_images(
-                            [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                            if os.path.exists("images/btn_o.png") else
-                            [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                            titles=["正解", "不正解"],
-                            div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                            img_style={"width": "120px", "cursor": "pointer"},
-                            key=f"img_btn_y_{ptr}"
-                        )
-
-                        if clicked > -1:
-                            st.session_state.y_answered = True
-                            correct = str(row.get("正誤", "")).strip()
-                            st.session_state.y_user_ans = "○" if clicked == 0 else "×"
-                            st.session_state.y_total_count += 1
-                            
-                            if st.session_state.y_user_ans == correct:
-                                st.session_state.y_correct_count += 1
-                                st.session_state.teacher_state = "happy"
-                            else:
-                                st.session_state.teacher_state = "sad"
-                            st.rerun()
+                        if st.session_state.get("y_active_audio"):
+                            render_no_download_audio(st.session_state.y_active_audio)
 
                     if st.session_state.y_answered:
-                        correct = str(row.get("正誤", "")).strip()
-                        if st.session_state.y_user_ans == correct:
-                            col_ok, col_img = st.columns([5, 1])
-                            with col_ok:
-                                st.success("正解です！")
-                            with col_img:
-                                if os.path.exists("images/1_teacher_happy_o.png"):
-                                    st.image("images/1_teacher_happy_o.png", width=45)
-                        else:
-                            col_err, col_img = st.columns([5, 1])
-                            with col_err:
-                                st.error(f"不正解... （正解は {correct} です）")
-                            with col_img:
-                                if os.path.exists("images/1_teacher_sad_x.png"):
-                                    st.image("images/1_teacher_sad_x.png", width=45)
-                            
-                        st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
-
-                        if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_y_{ptr}"):
-                            a_file = get_audio_file_path("A", q_num_val, limb_val)
-                            if a_file:
-                                render_no_download_audio(a_file)
+                        with ui_result:
+                            correct = str(row.get("正誤", "")).strip()
+                            if st.session_state.y_user_ans == correct:
+                                col_ok, col_img = st.columns([5, 1])
+                                with col_ok:
+                                    st.success("正解です！")
+                                with col_img:
+                                    if os.path.exists("images/1_teacher_happy_o.png"):
+                                        st.image("images/1_teacher_happy_o.png", width=45)
                             else:
-                                st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
+                                col_err, col_img = st.columns([5, 1])
+                                with col_err:
+                                    st.error(f"不正解... （正解は {correct} です）")
+                                with col_img:
+                                    if os.path.exists("images/1_teacher_sad_x.png"):
+                                        st.image("images/1_teacher_sad_x.png", width=45)
+                                
+                            st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
 
-                        st.markdown("<br>", unsafe_allow_html=True)
+                            if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_y_{ptr}"):
+                                a_file = get_audio_file_path("A", q_num_val, limb_val)
+                                if a_file:
+                                    render_no_download_audio(a_file)
+                                else:
+                                    st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
 
-                        if st.button("次の問題へ ➡", key="y_btn_next"):
-                            st.session_state.y_ptr += 1
+                            st.markdown("<br>", unsafe_allow_html=True)
+
+                            if st.button("次の問題へ ➡", key="y_btn_next", type="primary", use_container_width=True):
+                                st.session_state.y_ptr += 1
+                                st.session_state.y_answered = False
+                                st.session_state.y_user_ans = None
+                                st.session_state.teacher_state = "normal"
+                                st.session_state.y_active_audio = None
+                                reset_inline_chat()
+                                st.rerun()
+                                
+                        with ui_extra:
+                            with st.expander("この問題の誤りや法改正を報告する"):
+                                report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_y_{ptr}")
+                                if st.button("報告を送信", key=f"btn_send_report_y_{ptr}"):
+                                    if report_text:
+                                        q_no_for_report = row.get('問題番号', '不明')
+                                        with st.spinner("送信中..."):
+                                            success = send_report_email(q_no_for_report, report_text)
+                                        if success:
+                                            st.success("報告を送信しました。")
+                                        else:
+                                            st.error("送信に失敗しました。")
+
+                            render_inline_chat(row)
+                else:
+                    with ui_top:
+                        st.balloons()
+                        final_acc = (st.session_state.y_correct_count / st.session_state.y_total_count * 100) if st.session_state.y_total_count > 0 else 0
+                        st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc:.1f}% ({st.session_state.y_total_count}問中 {st.session_state.y_correct_count}問正解)")
+                        if st.button("最初からやり直す", key="y_btn_reset"):
+                            st.session_state.y_ptr = 0
                             st.session_state.y_answered = False
-                            st.session_state.y_user_ans = None
+                            st.session_state.y_correct_count = 0
+                            st.session_state.y_total_count = 0
                             st.session_state.teacher_state = "normal"
                             st.session_state.y_active_audio = None
                             reset_inline_chat()
                             st.rerun()
-                            
-                        with st.expander("この問題の誤りや法改正を報告する"):
-                            report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_y_{ptr}")
-                            if st.button("報告を送信", key=f"btn_send_report_y_{ptr}"):
-                                if report_text:
-                                    q_no_for_report = row.get('問題番号', '不明')
-                                    with st.spinner("送信中..."):
-                                        success = send_report_email(q_no_for_report, report_text)
-                                    if success:
-                                        st.success("報告を送信しました。")
-                                    else:
-                                        st.error("送信に失敗しました。")
-
-                        render_inline_chat(row)
-                else:
-                    st.balloons()
-                    final_acc = (st.session_state.y_correct_count / st.session_state.y_total_count * 100) if st.session_state.y_total_count > 0 else 0
-                    st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc:.1f}% ({st.session_state.y_total_count}問中 {st.session_state.y_correct_count}問正解)")
-                    if st.button("最初からやり直す", key="y_btn_reset"):
-                        st.session_state.y_ptr = 0
-                        st.session_state.y_answered = False
-                        st.session_state.y_correct_count = 0
-                        st.session_state.y_total_count = 0
-                        st.session_state.teacher_state = "normal"
-                        st.session_state.y_active_audio = None
-                        reset_inline_chat()
-                        st.rerun()
 
 # ==========================================
 # ルート2：科目別
@@ -1304,15 +1316,23 @@ elif menu == "科目別":
     if not df.empty and "分野" in df.columns:
         categories = sorted(df["分野"].dropna().unique())
         
-        col_cat, col_question_c = st.columns(2)
+        ui_top = st.container()
+        ui_result = st.container()
+        ui_actions = st.container()
+        ui_controls = st.container()
+        ui_extra = st.container()
 
-        with col_cat:
-            selected_cat = st.selectbox("科目を選択してください", categories, key="c_cat")
+        with ui_controls:
+            st.markdown("---")
+            col_cat, col_question_c = st.columns(2)
+            with col_cat:
+                selected_cat = st.selectbox("科目を選択してください", categories, key="c_cat")
 
         cat_rows = df[df["分野"] == selected_cat].reset_index(drop=True)
 
         if not cat_rows.empty:
-            mode_cat = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="c_mode")
+            with ui_controls:
+                mode_cat = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="c_mode")
 
             if (
                 st.session_state.get("c_current_cat") != selected_cat
@@ -1348,12 +1368,13 @@ elif menu == "科目別":
                     else:
                         q_options_c.append(f"第 {i+1} 問 🔒[有料会員限定]")
 
-                with col_question_c:
-                    selected_q_c = st.selectbox(
-                        "現在の問題（選択して移動も可能）:", 
-                        q_options_c, 
-                        index=current_target_idx_c
-                    )
+                with ui_controls:
+                    with col_question_c:
+                        selected_q_c = st.selectbox(
+                            "現在の問題（選択して移動も可能）:", 
+                            q_options_c, 
+                            index=current_target_idx_c
+                        )
                 
                 target_start_idx_c = int(selected_q_c.replace(" 🔒[有料会員限定]", "").replace("第 ", "").replace(" 問", "")) - 1
                 if target_start_idx_c != current_target_idx_c:
@@ -1369,27 +1390,26 @@ elif menu == "科目別":
                 is_locked_q = "🔒" in selected_q_c
 
                 if is_locked_q:
-                    render_paywall()
-                    
-                    if st.button("次の問題へスキップ ➡", key="c_btn_skip_lock"):
-                        st.session_state.c_ptr += 1
-                        st.session_state.c_answered = False
-                        st.session_state.c_user_ans = None
-                        st.session_state.teacher_state = "normal"
-                        st.session_state.c_active_audio = None
-                        reset_inline_chat()
-                        st.rerun()
+                    with ui_top:
+                        render_paywall()
+                        
+                        if st.button("次の問題へスキップ ➡", key="c_btn_skip_lock"):
+                            st.session_state.c_ptr += 1
+                            st.session_state.c_answered = False
+                            st.session_state.c_user_ans = None
+                            st.session_state.teacher_state = "normal"
+                            st.session_state.c_active_audio = None
+                            reset_inline_chat()
+                            st.rerun()
                 else:
                     acc_rate_c = (st.session_state.c_correct_count / st.session_state.c_total_count * 100) if st.session_state.c_total_count > 0 else 0
-
-                    col_info_c, col_audio_c, col_bm_c = st.columns([3, 1, 1])
 
                     q_num_val = row.get("問題番号", "")
                     limb_val = row.get("肢", "")
                     q_key = f"{q_num_val}_{limb_val}"
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
-                    with col_info_c:
+                    with ui_top:
                         st.markdown(
                             f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
                             f'【 科目: {selected_cat} 】 ( {ptr_c + 1} / {len(cat_rows)} 問目 )<br>'
@@ -1398,125 +1418,130 @@ elif menu == "科目別":
                             unsafe_allow_html=True
                         )
 
-                    with col_audio_c:
-                        if st.button("🔊 音声", key=f"btn_audio_c_{ptr_c}", use_container_width=True):
-                            q_file = get_audio_file_path("Q", q_num_val, limb_val)
-                            if q_file:
-                                st.session_state.c_active_audio = q_file
+                        st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                        st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
+
+                        if not st.session_state.c_answered:
+                            clicked_c = clickable_images(
+                                [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                if os.path.exists("images/btn_o.png") else
+                                [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                titles=["正解", "不正解"],
+                                div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                img_style={"width": "120px", "cursor": "pointer"},
+                                key=f"img_btn_c_{ptr_c}"
+                            )
+
+                            if clicked_c > -1:
+                                st.session_state.c_answered = True
+                                correct = str(row.get("正誤", "")).strip()
+                                st.session_state.c_user_ans = "○" if clicked_c == 0 else "×"
+                                st.session_state.c_total_count += 1
+                                
+                                if st.session_state.c_user_ans == correct:
+                                    st.session_state.c_correct_count += 1
+                                    st.session_state.teacher_state = "happy"
+                                else:
+                                    st.session_state.teacher_state = "sad"
+                                st.rerun()
+                                
+                    with ui_actions:
+                        col_audio_c, col_bm_c = st.columns(2)
+                        with col_audio_c:
+                            if st.button("🔊 音声", key=f"btn_audio_c_{ptr_c}", use_container_width=True):
+                                q_file = get_audio_file_path("Q", q_num_val, limb_val)
+                                if q_file:
+                                    st.session_state.c_active_audio = q_file
+                                else:
+                                    st.session_state.c_active_audio = None
+                                    st.error("音声なし")
+
+                        with col_bm_c:
+                            if not is_logged_in:
+                                if st.button("🔖 付箋", key=f"bm_disabled_c_{ptr_c}", use_container_width=True):
+                                    st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
+                            elif is_bookmarked:
+                                if st.button("📌 解除", key=f"bm_remove_c_{ptr_c}", type="primary", use_container_width=True):
+                                    if remove_bookmark(user_id, q_key):
+                                        st.session_state.user_bookmarks.remove(q_key)
+                                        st.toast("付箋を外しました", icon="🗑️")
+                                        st.rerun()
                             else:
-                                st.session_state.c_active_audio = None
-                                st.error("音声なし")
+                                if st.button("🔖 付箋", key=f"bm_add_c_{ptr_c}", use_container_width=True):
+                                    if add_bookmark(user_id, q_key):
+                                        st.session_state.user_bookmarks.append(q_key)
+                                        st.toast("付箋を追加しました！", icon="📌")
+                                        st.rerun()
 
-                    with col_bm_c:
-                        if not is_logged_in:
-                            if st.button("🔖 付箋", key=f"bm_disabled_c_{ptr_c}", use_container_width=True):
-                                st.toast("付箋機能を利用するにはログインが必要です。", icon="🔒")
-                        elif is_bookmarked:
-                            if st.button("📌 解除", key=f"bm_remove_c_{ptr_c}", type="primary", use_container_width=True):
-                                if remove_bookmark(user_id, q_key):
-                                    st.session_state.user_bookmarks.remove(q_key)
-                                    st.toast("付箋を外しました", icon="🗑️")
-                                    st.rerun()
-                        else:
-                            if st.button("🔖 付箋", key=f"bm_add_c_{ptr_c}", use_container_width=True):
-                                if add_bookmark(user_id, q_key):
-                                    st.session_state.user_bookmarks.append(q_key)
-                                    st.toast("付箋を追加しました！", icon="📌")
-                                    st.rerun()
-
-                    if st.session_state.get("c_active_audio"):
-                        render_no_download_audio(st.session_state.c_active_audio)
-
-                    st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
-                    st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
-
-                    if not st.session_state.c_answered:
-                        clicked_c = clickable_images(
-                            [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                            if os.path.exists("images/btn_o.png") else
-                            [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                            titles=["正解", "不正解"],
-                            div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                            img_style={"width": "120px", "cursor": "pointer"},
-                            key=f"img_btn_c_{ptr_c}"
-                        )
-
-                        if clicked_c > -1:
-                            st.session_state.c_answered = True
-                            correct = str(row.get("正誤", "")).strip()
-                            st.session_state.c_user_ans = "○" if clicked_c == 0 else "×"
-                            st.session_state.c_total_count += 1
-                            
-                            if st.session_state.c_user_ans == correct:
-                                st.session_state.c_correct_count += 1
-                                st.session_state.teacher_state = "happy"
-                            else:
-                                st.session_state.teacher_state = "sad"
-                            st.rerun()
+                        if st.session_state.get("c_active_audio"):
+                            render_no_download_audio(st.session_state.c_active_audio)
 
                     if st.session_state.c_answered:
-                        correct = str(row.get("正誤", "")).strip()
-                        if st.session_state.c_user_ans == correct:
-                            col_ok, col_img = st.columns([5, 1])
-                            with col_ok:
-                                st.success("正解です！")
-                            with col_img:
-                                if os.path.exists("images/1_teacher_happy_o.png"):
-                                    st.image("images/1_teacher_happy_o.png", width=45)
-                        else:
-                            col_err, col_img = st.columns([5, 1])
-                            with col_err:
-                                st.error(f"不正解... （正解は {correct} です）")
-                            with col_img:
-                                if os.path.exists("images/1_teacher_sad_x.png"):
-                                    st.image("images/1_teacher_sad_x.png", width=45)
-                            
-                        st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
-
-                        if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_c_{ptr_c}"):
-                            a_file = get_audio_file_path("A", q_num_val, limb_val)
-                            if a_file:
-                                render_no_download_audio(a_file)
+                        with ui_result:
+                            correct = str(row.get("正誤", "")).strip()
+                            if st.session_state.c_user_ans == correct:
+                                col_ok, col_img = st.columns([5, 1])
+                                with col_ok:
+                                    st.success("正解です！")
+                                with col_img:
+                                    if os.path.exists("images/1_teacher_happy_o.png"):
+                                        st.image("images/1_teacher_happy_o.png", width=45)
                             else:
-                                st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
+                                col_err, col_img = st.columns([5, 1])
+                                with col_err:
+                                    st.error(f"不正解... （正解は {correct} です）")
+                                with col_img:
+                                    if os.path.exists("images/1_teacher_sad_x.png"):
+                                        st.image("images/1_teacher_sad_x.png", width=45)
+                                
+                            st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
 
-                        st.markdown("<br>", unsafe_allow_html=True)
+                            if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_c_{ptr_c}"):
+                                a_file = get_audio_file_path("A", q_num_val, limb_val)
+                                if a_file:
+                                    render_no_download_audio(a_file)
+                                else:
+                                    st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
 
-                        if st.button("次の問題へ ➡", key="c_btn_next"):
-                            st.session_state.c_ptr += 1
-                            st.session_state.c_answered = False
-                            st.session_state.c_user_ans = None
-                            st.session_state.teacher_state = "normal"
-                            st.session_state.c_active_audio = None
-                            reset_inline_chat()
-                            st.rerun()
-                            
-                        with st.expander("この問題の誤りや法改正を報告する"):
-                            report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_c_{ptr_c}")
-                            if st.button("報告を送信", key=f"btn_send_report_c_{ptr_c}"):
-                                if report_text:
-                                    q_no_for_report = row.get('問題番号', '不明')
-                                    with st.spinner("送信中..."):
-                                        success = send_report_email(q_no_for_report, report_text)
-                                    if success:
-                                        st.success("報告を送信しました。")
-                                    else:
-                                        st.error("送信に失敗しました。")
+                            st.markdown("<br>", unsafe_allow_html=True)
 
-                        render_inline_chat(row)
+                            if st.button("次の問題へ ➡", key="c_btn_next", type="primary", use_container_width=True):
+                                st.session_state.c_ptr += 1
+                                st.session_state.c_answered = False
+                                st.session_state.c_user_ans = None
+                                st.session_state.teacher_state = "normal"
+                                st.session_state.c_active_audio = None
+                                reset_inline_chat()
+                                st.rerun()
+                                
+                        with ui_extra:
+                            with st.expander("この問題の誤りや法改正を報告する"):
+                                report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_c_{ptr_c}")
+                                if st.button("報告を送信", key=f"btn_send_report_c_{ptr_c}"):
+                                    if report_text:
+                                        q_no_for_report = row.get('問題番号', '不明')
+                                        with st.spinner("送信中..."):
+                                            success = send_report_email(q_no_for_report, report_text)
+                                        if success:
+                                            st.success("報告を送信しました。")
+                                        else:
+                                            st.error("送信に失敗しました。")
+
+                            render_inline_chat(row)
             else:
-                st.balloons()
-                final_acc_c = (st.session_state.c_correct_count / st.session_state.c_total_count * 100) if st.session_state.c_total_count > 0 else 0
-                st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc_c:.1f}% ({st.session_state.c_total_count}問中 {st.session_state.c_correct_count}問正解)")
-                if st.button("最初からやり直す", key="c_btn_reset"):
-                    st.session_state.c_ptr = 0
-                    st.session_state.c_answered = False
-                    st.session_state.c_correct_count = 0
-                    st.session_state.c_total_count = 0
-                    st.session_state.teacher_state = "normal"
-                    st.session_state.c_active_audio = None
-                    reset_inline_chat()
-                    st.rerun()
+                with ui_top:
+                    st.balloons()
+                    final_acc_c = (st.session_state.c_correct_count / st.session_state.c_total_count * 100) if st.session_state.c_total_count > 0 else 0
+                    st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc_c:.1f}% ({st.session_state.c_total_count}問中 {st.session_state.c_correct_count}問正解)")
+                    if st.button("最初からやり直す", key="c_btn_reset"):
+                        st.session_state.c_ptr = 0
+                        st.session_state.c_answered = False
+                        st.session_state.c_correct_count = 0
+                        st.session_state.c_total_count = 0
+                        st.session_state.teacher_state = "normal"
+                        st.session_state.c_active_audio = None
+                        reset_inline_chat()
+                        st.rerun()
 
 # ==========================================
 # ルート2.5：付箋問題
@@ -1544,7 +1569,15 @@ elif menu == "付箋問題":
             if bookmark_rows.empty:
                 st.info("付箋が登録されている問題は見つかりませんでした。")
             else:
-                mode_bm = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="bm_mode")
+                ui_top = st.container()
+                ui_result = st.container()
+                ui_actions = st.container()
+                ui_controls = st.container()
+                ui_extra = st.container()
+                
+                with ui_controls:
+                    st.markdown("---")
+                    mode_bm = st.radio("出題モード:", ["順番通り", "ランダム"], horizontal=True, key="bm_mode")
 
                 if (
                     st.session_state.get("bm_current_mode") != mode_bm
@@ -1579,11 +1612,12 @@ elif menu == "付箋問題":
                         else:
                             q_options_bm.append(f"第 {i+1} 問 🔒[有料会員限定]")
 
-                    selected_q_bm = st.selectbox(
-                        "現在の問題（選択して移動も可能）:", 
-                        q_options_bm, 
-                        index=current_target_idx_bm
-                    )
+                    with ui_controls:
+                        selected_q_bm = st.selectbox(
+                            "現在の問題（選択して移動も可能）:", 
+                            q_options_bm, 
+                            index=current_target_idx_bm
+                        )
 
                     target_start_idx_bm = int(selected_q_bm.replace(" 🔒[有料会員限定]", "").replace("第 ", "").replace(" 問", "")) - 1
                     if target_start_idx_bm != current_target_idx_bm:
@@ -1599,116 +1633,9 @@ elif menu == "付箋問題":
                     is_locked_bm = "🔒" in selected_q_bm
 
                     if is_locked_bm:
-                        render_paywall()
-                        if st.button("次の問題へスキップ ➡", key="bm_btn_skip_lock"):
-                            st.session_state.bm_ptr += 1
-                            st.session_state.bm_answered = False
-                            st.session_state.bm_user_ans = None
-                            st.session_state.teacher_state = "normal"
-                            st.session_state.bm_active_audio = None
-                            reset_inline_chat()
-                            st.rerun()
-                    else:
-                        acc_rate_bm = (st.session_state.bm_correct_count / st.session_state.bm_total_count * 100) if st.session_state.bm_total_count > 0 else 0
-
-                        col_info_bm, col_audio_bm, col_bm_bm = st.columns([3, 1, 1])
-                        q_num_val = row.get("問題番号", "")
-                        limb_val = row.get("肢", "")
-                        q_key = f"{q_num_val}_{limb_val}"
-                        is_bookmarked = q_key in st.session_state.user_bookmarks
-
-                        with col_info_bm:
-                            st.markdown(
-                                f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
-                                f'【 付箋問題 】 ( {ptr_bm + 1} / {len(bookmark_rows)} 問目 )<br>'
-                                f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)</span>'
-                                f'</div>',
-                                unsafe_allow_html=True
-                            )
-
-                        with col_audio_bm:
-                            if st.button("🔊 音声", key=f"btn_audio_bm_{ptr_bm}", use_container_width=True):
-                                q_file = get_audio_file_path("Q", q_num_val, limb_val)
-                                if q_file:
-                                    st.session_state.bm_active_audio = q_file
-                                else:
-                                    st.session_state.bm_active_audio = None
-                                    st.error("音声なし")
-
-                        with col_bm_bm:
-                            if is_bookmarked:
-                                if st.button("📌 解除", key=f"bm_remove_btn_{ptr_bm}", type="primary", use_container_width=True):
-                                    if remove_bookmark(user_id, q_key):
-                                        if q_key in st.session_state.user_bookmarks:
-                                            st.session_state.user_bookmarks.remove(q_key)
-                                        st.toast("付箋を外しました", icon="🗑️")
-                                        st.rerun()
-                            else:
-                                if st.button("🔖 付箋", key=f"bm_add_btn_{ptr_bm}", use_container_width=True):
-                                    if add_bookmark(user_id, q_key):
-                                        st.session_state.user_bookmarks.append(q_key)
-                                        st.toast("付箋を追加しました！", icon="📌")
-                                        st.rerun()
-
-                        if st.session_state.get("bm_active_audio"):
-                            render_no_download_audio(st.session_state.bm_active_audio)
-
-                        st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
-                        st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
-
-                        if not st.session_state.bm_answered:
-                            clicked_bm = clickable_images(
-                                [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
-                                if os.path.exists("images/btn_o.png") else
-                                [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
-                                titles=["正解", "不正解"],
-                                div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                img_style={"width": "120px", "cursor": "pointer"},
-                                key=f"img_btn_bm_{ptr_bm}"
-                            )
-
-                            if clicked_bm > -1:
-                                st.session_state.bm_answered = True
-                                correct = str(row.get("正誤", "")).strip()
-                                st.session_state.bm_user_ans = "○" if clicked_bm == 0 else "×"
-                                st.session_state.bm_total_count += 1
-                                
-                                if st.session_state.bm_user_ans == correct:
-                                    st.session_state.bm_correct_count += 1
-                                    st.session_state.teacher_state = "happy"
-                                else:
-                                    st.session_state.teacher_state = "sad"
-                                st.rerun()
-
-                        if st.session_state.bm_answered:
-                            correct = str(row.get("正誤", "")).strip()
-                            if st.session_state.bm_user_ans == correct:
-                                col_ok, col_img = st.columns([5, 1])
-                                with col_ok:
-                                    st.success("正解です！")
-                                with col_img:
-                                    if os.path.exists("images/1_teacher_happy_o.png"):
-                                        st.image("images/1_teacher_happy_o.png", width=45)
-                            else:
-                                col_err, col_img = st.columns([5, 1])
-                                with col_err:
-                                    st.error(f"不正解... （正解は {correct} です）")
-                                with col_img:
-                                    if os.path.exists("images/1_teacher_sad_x.png"):
-                                        st.image("images/1_teacher_sad_x.png", width=45)
-                                
-                            st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
-
-                            if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_bm_{ptr_bm}"):
-                                a_file = get_audio_file_path("A", q_num_val, limb_val)
-                                if a_file:
-                                    render_no_download_audio(a_file)
-                                else:
-                                    st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
-
-                            st.markdown("<br>", unsafe_allow_html=True)
-
-                            if st.button("次の問題へ ➡", key="bm_btn_next"):
+                        with ui_top:
+                            render_paywall()
+                            if st.button("次の問題へスキップ ➡", key="bm_btn_skip_lock"):
                                 st.session_state.bm_ptr += 1
                                 st.session_state.bm_answered = False
                                 st.session_state.bm_user_ans = None
@@ -1716,33 +1643,144 @@ elif menu == "付箋問題":
                                 st.session_state.bm_active_audio = None
                                 reset_inline_chat()
                                 st.rerun()
-                                
-                            with st.expander("この問題の誤りや法改正を報告する"):
-                                report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_bm_{ptr_bm}")
-                                if st.button("報告を送信", key=f"btn_send_report_bm_{ptr_bm}"):
-                                    if report_text:
-                                        q_no_for_report = row.get('問題番号', '不明')
-                                        with st.spinner("送信中..."):
-                                            success = send_report_email(q_no_for_report, report_text)
-                                        if success:
-                                            st.success("報告を送信しました。")
-                                        else:
-                                            st.error("送信に失敗しました。")
+                    else:
+                        acc_rate_bm = (st.session_state.bm_correct_count / st.session_state.bm_total_count * 100) if st.session_state.bm_total_count > 0 else 0
 
-                            render_inline_chat(row)
+                        q_num_val = row.get("問題番号", "")
+                        limb_val = row.get("肢", "")
+                        q_key = f"{q_num_val}_{limb_val}"
+                        is_bookmarked = q_key in st.session_state.user_bookmarks
+
+                        with ui_top:
+                            st.markdown(
+                                f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
+                                f'【 付箋問題 】 ( {ptr_bm + 1} / {len(bookmark_rows)} 問目 )<br>'
+                                f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)</span>'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+                            st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                            st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
+
+                            if not st.session_state.bm_answered:
+                                clicked_bm = clickable_images(
+                                    [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                    if os.path.exists("images/btn_o.png") else
+                                    [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                    titles=["正解", "不正解"],
+                                    div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                    img_style={"width": "120px", "cursor": "pointer"},
+                                    key=f"img_btn_bm_{ptr_bm}"
+                                )
+
+                                if clicked_bm > -1:
+                                    st.session_state.bm_answered = True
+                                    correct = str(row.get("正誤", "")).strip()
+                                    st.session_state.bm_user_ans = "○" if clicked_bm == 0 else "×"
+                                    st.session_state.bm_total_count += 1
+                                    
+                                    if st.session_state.bm_user_ans == correct:
+                                        st.session_state.bm_correct_count += 1
+                                        st.session_state.teacher_state = "happy"
+                                    else:
+                                        st.session_state.teacher_state = "sad"
+                                    st.rerun()
+
+                        with ui_actions:
+                            col_audio_bm, col_bm_bm = st.columns(2)
+                            with col_audio_bm:
+                                if st.button("🔊 音声", key=f"btn_audio_bm_{ptr_bm}", use_container_width=True):
+                                    q_file = get_audio_file_path("Q", q_num_val, limb_val)
+                                    if q_file:
+                                        st.session_state.bm_active_audio = q_file
+                                    else:
+                                        st.session_state.bm_active_audio = None
+                                        st.error("音声なし")
+
+                            with col_bm_bm:
+                                if is_bookmarked:
+                                    if st.button("📌 解除", key=f"bm_remove_btn_{ptr_bm}", type="primary", use_container_width=True):
+                                        if remove_bookmark(user_id, q_key):
+                                            if q_key in st.session_state.user_bookmarks:
+                                                st.session_state.user_bookmarks.remove(q_key)
+                                            st.toast("付箋を外しました", icon="🗑️")
+                                            st.rerun()
+                                else:
+                                    if st.button("🔖 付箋", key=f"bm_add_btn_{ptr_bm}", use_container_width=True):
+                                        if add_bookmark(user_id, q_key):
+                                            st.session_state.user_bookmarks.append(q_key)
+                                            st.toast("付箋を追加しました！", icon="📌")
+                                            st.rerun()
+
+                            if st.session_state.get("bm_active_audio"):
+                                render_no_download_audio(st.session_state.bm_active_audio)
+
+                        if st.session_state.bm_answered:
+                            with ui_result:
+                                correct = str(row.get("正誤", "")).strip()
+                                if st.session_state.bm_user_ans == correct:
+                                    col_ok, col_img = st.columns([5, 1])
+                                    with col_ok:
+                                        st.success("正解です！")
+                                    with col_img:
+                                        if os.path.exists("images/1_teacher_happy_o.png"):
+                                            st.image("images/1_teacher_happy_o.png", width=45)
+                                else:
+                                    col_err, col_img = st.columns([5, 1])
+                                    with col_err:
+                                        st.error(f"不正解... （正解は {correct} です）")
+                                    with col_img:
+                                        if os.path.exists("images/1_teacher_sad_x.png"):
+                                            st.image("images/1_teacher_sad_x.png", width=45)
+                                    
+                                st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
+
+                                if st.button("🔊 解説を読み上げる", key=f"btn_audio_ans_bm_{ptr_bm}"):
+                                    a_file = get_audio_file_path("A", q_num_val, limb_val)
+                                    if a_file:
+                                        render_no_download_audio(a_file)
+                                    else:
+                                        st.error(f"解説音声（A_{q_num_val}_{limb_val}）が見つかりません。")
+
+                                st.markdown("<br>", unsafe_allow_html=True)
+
+                                if st.button("次の問題へ ➡", key="bm_btn_next", type="primary", use_container_width=True):
+                                    st.session_state.bm_ptr += 1
+                                    st.session_state.bm_answered = False
+                                    st.session_state.bm_user_ans = None
+                                    st.session_state.teacher_state = "normal"
+                                    st.session_state.bm_active_audio = None
+                                    reset_inline_chat()
+                                    st.rerun()
+                                    
+                            with ui_extra:
+                                with st.expander("この問題の誤りや法改正を報告する"):
+                                    report_text = st.text_area("報告内容・根拠を記載", key=f"report_area_bm_{ptr_bm}")
+                                    if st.button("報告を送信", key=f"btn_send_report_bm_{ptr_bm}"):
+                                        if report_text:
+                                            q_no_for_report = row.get('問題番号', '不明')
+                                            with st.spinner("送信中..."):
+                                                success = send_report_email(q_no_for_report, report_text)
+                                            if success:
+                                                st.success("報告を送信しました。")
+                                            else:
+                                                st.error("送信に失敗しました。")
+
+                                render_inline_chat(row)
                 else:
-                    st.balloons()
-                    final_acc_bm = (st.session_state.bm_correct_count / st.session_state.bm_total_count * 100) if st.session_state.bm_total_count > 0 else 0
-                    st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)")
-                    if st.button("最初からやり直す", key="bm_btn_reset"):
-                        st.session_state.bm_ptr = 0
-                        st.session_state.bm_answered = False
-                        st.session_state.bm_correct_count = 0
-                        st.session_state.bm_total_count = 0
-                        st.session_state.teacher_state = "normal"
-                        st.session_state.bm_active_audio = None
-                        reset_inline_chat()
-                        st.rerun()
+                    with ui_top:
+                        st.balloons()
+                        final_acc_bm = (st.session_state.bm_correct_count / st.session_state.bm_total_count * 100) if st.session_state.bm_total_count > 0 else 0
+                        st.success(f"全ての問題を完了しました！ 最終正答率: {final_acc_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)")
+                        if st.button("最初からやり直す", key="bm_btn_reset"):
+                            st.session_state.bm_ptr = 0
+                            st.session_state.bm_answered = False
+                            st.session_state.bm_correct_count = 0
+                            st.session_state.bm_total_count = 0
+                            st.session_state.teacher_state = "normal"
+                            st.session_state.bm_active_audio = None
+                            reset_inline_chat()
+                            st.rerun()
 
 # ==========================================
 # ルート3：過去問聞き流し
