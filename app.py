@@ -883,13 +883,17 @@ st.markdown("""
         }
 
         div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(1) {
-            flex: 1.8 1 auto !important;
-            width: auto !important;
-        }
-        div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
-            flex: 1.2 1 auto !important;
-            width: auto !important;
-        }
+                flex: none !important;
+                width: 100% !important;
+            }
+            div[data-testid="stHorizontalBlock"]:first-of-type > div[data-testid="column"]:nth-child(2) {
+                flex: none !important;
+                width: 100% !important;
+            }
+            /* 念のため文字色も確実に黒になるよう指定 */
+            div[data-baseweb="select"] * {
+                color: #0F172A !important;
+            }
 
         div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) {
                 width: 100% !important;
