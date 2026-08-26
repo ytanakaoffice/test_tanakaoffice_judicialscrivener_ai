@@ -859,57 +859,56 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* スマホでもカラムを横並びに強制し、画面内に収める */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
+        * {
+            box-sizing: border-box !important;
+        }
+
+        /* 横並びを絶対に維持 */
+        div[data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            gap: 8px !important;
             width: 100% !important;
+            gap: 6px !important;
         }
         
-        /* 1行に2つ並べるための魔法（コンテンツサイズに負けない） */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
+        /* スマホ時の100%強制を無効化し、等分（50%ずつ）にする */
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
             width: 50% !important;
             min-width: 0 !important;
-            flex: 1 1 0% !important;
-        }
-        
-        /* 1行目（問題情報 と 次へボタン）の比率調整 */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(1) {
-            flex: 2 1 0% !important; /* 約66% */
-        }
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(2) {
-            flex: 1 1 0% !important; /* 約33% */
+            max-width: 50% !important;
+            flex: 1 1 50% !important;
+            padding: 0 !important;
         }
 
-        /* ボタンが枠からはみ出さないようにする */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
+        /* 「問題番号・正答率」の表示部分は少し広く、次へボタンのエリアは少し狭くする特例 */
+        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stToggle"]) > div[data-testid="column"]:nth-child(1) {
+            width: 65% !important;
+            max-width: 65% !important;
+            flex: 1.8 1 0% !important;
+        }
+        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stToggle"]) > div[data-testid="column"]:nth-child(2) {
+            width: 35% !important;
+            max-width: 35% !important;
+            flex: 1.2 1 0% !important;
+        }
+
+        /* ボタンが枠からはみ出さないようにテキストを省略する */
+        div[data-testid="stHorizontalBlock"] button {
+            max-width: 100% !important;
             height: 48px !important;
             font-size: 0.9rem !important;
-            border-radius: 8px !important;
-            width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
+            padding: 0 4px !important;
         }
-        
-        /* Toggleや一部のボタンの微調整 */
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) button,
-        [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) div[data-testid="stToggle"] {
-            height: 38px !important;
-            font-size: 0.8rem !important;
-            margin-bottom: 2px !important;
-        }
-        
+
         .header-img-top-hide-mobile { display: none !important; }
-        
         .custom-question-card {
-            font-size: 1.2rem !important;
-            padding: 16px;
-            line-height: 1.6 !important;
+            font-size: 1.15rem !important;
+            padding: 14px !important;
+            line-height: 1.5 !important;
         }
     }
 </style>
@@ -1035,6 +1034,14 @@ def reset_inline_chat():
 MAX_CHAT = 30 if is_premium else 2
 
 def render_ai_teacher():
+    # ★軽量化モードONなら、画像を一切読み込まない
+    if st.session_state.get("fast_mode", False):
+        with st.sidebar:
+            st.title("田中式 司法書士一問一答")
+            st.markdown("### AIたなかっち1号先生")
+            st.markdown("---")
+        return
+
     image_map = {
         "normal": "images/1_teacher_normal.png",
         "thinking": "images/1_teacher_thinking.png",
@@ -1291,7 +1298,7 @@ if menu == "年度別":
                             )
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         with col_next:
-                            st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="c_fast_toggle")
+                            st.session_state.fast_mode = st.toggle("⚡ 軽量化モード (全画像OFF)", value=st.session_state.get("fast_mode", False), key="c_fast_toggle")
                             if st.button("次へ ➡", key=f"y_btn_next_top_{ptr}", use_container_width=True):
                                 st.session_state.y_ptr += 1
                                 st.session_state.y_answered = False
@@ -1373,14 +1380,14 @@ if menu == "年度別":
                                 with col_ok:
                                     st.success("正解です！")
                                 with col_img:
-                                    if os.path.exists("images/1_teacher_happy_o.png"):
+                                    if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_happy_o.png"):
                                         st.image("images/1_teacher_happy_o.png", width=45)
                             else:
                                 col_err, col_img = st.columns([5, 1])
                                 with col_err:
                                     st.error(f"不正解... （正解は {correct} です）")
                                 with col_img:
-                                    if os.path.exists("images/1_teacher_sad_x.png"):
+                                    if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_sad_x.png"):
                                         st.image("images/1_teacher_sad_x.png", width=45)
                                 
                             st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
@@ -1549,7 +1556,7 @@ elif menu == "科目別":
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         
                         with col_next_c:
-                            st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="bm_fast_toggle")
+                            st.session_state.fast_mode = st.toggle("⚡ 軽量化モード (全画像OFF)", value=st.session_state.get("fast_mode", False), key="bm_fast_toggle")
                             if st.button("次へ ➡", key=f"c_btn_next_top_{ptr_c}", use_container_width=True):
                                 st.session_state.c_ptr += 1
                                 st.session_state.c_answered = False
@@ -1631,14 +1638,14 @@ elif menu == "科目別":
                                 with col_ok:
                                     st.success("正解です！")
                                 with col_img:
-                                    if os.path.exists("images/1_teacher_happy_o.png"):
+                                    if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_happy_o.png"):
                                         st.image("images/1_teacher_happy_o.png", width=45)
                             else:
                                 col_err, col_img = st.columns([5, 1])
                                 with col_err:
                                     st.error(f"不正解... （正解は {correct} です）")
                                 with col_img:
-                                    if os.path.exists("images/1_teacher_sad_x.png"):
+                                    if not st.session_state.get("fast_mode", False) and os.path.exists("images/1_teacher_sad_x.png"):
                                         st.image("images/1_teacher_sad_x.png", width=45)
                                 
                             st.write(f"解説: {row.get('簡単な解説', '解説がありません')}")
@@ -1813,7 +1820,7 @@ elif menu == "付箋問題":
                                 st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                             
                             with col_next_bm:
-                                st.session_state.fast_mode = st.toggle("⚡ ボタン画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="y_fast_toggle")
+                                st.session_state.fast_mode = st.toggle("⚡ 軽量化モード (全画像OFF)", value=st.session_state.get("fast_mode", False), key="y_fast_toggle")
                                 if st.button("次へ ➡", key=f"bm_btn_next_top_{ptr_bm}", use_container_width=True):
                                     st.session_state.bm_ptr += 1
                                     st.session_state.bm_answered = False
