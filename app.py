@@ -1961,9 +1961,7 @@ elif menu == "付箋問題":
 # ルート3：過去問聞き流し
 # ==========================================
 elif menu == "過去問聞き流し":
-    render_header_image("top-always")
     st.subheader("🎧 過去問連続聞き流しモード")
-
     listen_type = st.radio("絞り込み方法を選択", ["年度別", "科目別"], horizontal=True, key="listen_type_radio")
 
     target_rows = pd.DataFrame()
@@ -2000,6 +1998,7 @@ elif menu == "過去問聞き流し":
     if not target_rows.empty:
         batch_size = 10 # 50から10に戻してメモリパンクを防ぐ
         total_questions = len(target_rows)
+        total_batches = (total_questions + batch_size - 1) // batch_size  # ← ★この1行を追加！
 
         if "listen_batch_page" not in st.session_state:
             st.session_state.listen_batch_page = 0
