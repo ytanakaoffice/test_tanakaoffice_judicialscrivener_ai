@@ -2020,21 +2020,29 @@ elif menu == "過去問聞き流し":
             else:
                 batch_options.append(batch_str + " 🔒[有料会員限定]")
 
-        def sync_batch_selection():
-            try:
-                st.session_state.listen_batch_page = batch_options.index(st.session_state.selected_batch_str)
-            except ValueError:
-                st.session_state.listen_batch_page = 0
+        # 現在のページ（内部状態）に対応する選択肢の文字列を取得
+        current_batch_page = st.session_state.listen_batch_page
+        if current_batch_page >= len(batch_options):
+            current_batch_page = 0
+            st.session_state.listen_batch_page = 0
 
+        current_option_str = batch_options[current_batch_page]
+
+        # セレクトボックスを表示
         selected_batch_str = st.selectbox(
             "再生する問題範囲を選択:", 
             batch_options, 
-            index=st.session_state.listen_batch_page, 
-            key="selected_batch_str",
-            on_change=sync_batch_selection
+            index=current_batch_page, 
+            key="selected_batch_str"
         )
 
-        current_batch_page = st.session_state.listen_batch_page
+        # もしユーザーがプルダウンを手動で変更した場合、内部状態（ページ）を更新する
+        if selected_batch_str != current_option_str:
+            try:
+                st.session_state.listen_batch_page = batch_options.index(selected_batch_str)
+                current_batch_page = st.session_state.listen_batch_page
+            except ValueError:
+                pass
 
         if "🔒" in selected_batch_str:
             render_paywall()
