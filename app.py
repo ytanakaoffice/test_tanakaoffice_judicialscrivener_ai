@@ -383,6 +383,8 @@ def get_header_image_base64():
     return ""
 
 def render_header_image(position="top"):
+    if st.session_state.get("fast_mode", False) and position == "bottom":
+        return
     b64 = get_header_image_base64()
     if b64:
         if position == "top":
@@ -825,21 +827,34 @@ st.markdown("""
     }
     .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
     .header-img-bottom { display: none !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
-    div[data-testid="column"] button {
-        height: 70px !important;
-        font-size: 1.4rem !important;
+
+    .keep-row { display: none; }
+    .big-btn-row { display: none; }
+    .big-btn-row + div[data-testid="stHorizontalBlock"] button {
+        height: 60px !important;
+        font-size: 1.2rem !important;
         font-weight: 700 !important;
         border-radius: 12px !important;
         border: 2px solid #e2e8f0 !important;
         color: #334155 !important;
         background-color: #f8fafc !important;
     }
-    div[data-testid="column"] button:hover {
+    .big-btn-row + div[data-testid="stHorizontalBlock"] button:hover {
         background-color: #e2e8f0 !important;
         border-color: #cbd5e1 !important;
         color: #0f172a !important;
     }
     @media (max-width: 768px) {
+        .keep-row + div[data-testid="stHorizontalBlock"] {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 10px !important;
+        }
+        .keep-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+            width: 50% !important;
+            flex: 1 1 0% !important;
+            min-width: 0 !important;
+        }
         .header-img-top-hide-mobile { display: none !important; }
         .header-img-bottom { display: block !important; }
         .custom-question-card {
@@ -1106,7 +1121,8 @@ else:
         show_tokusho_dialog()
 
 st.sidebar.markdown("---")
-
+st.session_state.fast_mode = st.sidebar.toggle("⚡ サクサク軽量モード", value=False, help="〇✖画像をオフにしてスマホでの動作を高速化します")
+st.sidebar.markdown("---")
 menu = st.sidebar.radio("移動先を選択", ["年度別", "科目別", "付箋問題", "過去問聞き流し", "AIに質問（チャット）"])
 
 # ==========================================
@@ -1232,10 +1248,22 @@ if menu == "年度別":
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.y_answered:
-                            col_btn_o, col_btn_x = st.columns(2)
-                            clicked_o = col_btn_o.button("〇 正解", key=f"y_o_{ptr}", use_container_width=True)
-                            clicked_x = col_btn_x.button("✖ 不正解", key=f"y_x_{ptr}", use_container_width=True)
-                            clicked = 0 if clicked_o else (1 if clicked_x else -1)
+                            if st.session_state.get("fast_mode", False):
+                                st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                col_btn_o, col_btn_x = st.columns(2)
+                                clicked_o = col_btn_o.button("〇 正解", key=f"y_o_{ptr}", use_container_width=True)
+                                clicked_x = col_btn_x.button("✖ 不正解", key=f"y_x_{ptr}", use_container_width=True)
+                                clicked = 0 if clicked_o else (1 if clicked_x else -1)
+                            else:
+                                clicked = clickable_images(
+                                    [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                    if os.path.exists("images/btn_o.png") else
+                                    [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                    titles=["正解", "不正解"],
+                                    div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                    img_style={"width": "120px", "cursor": "pointer"},
+                                    key=f"img_btn_y_{ptr}"
+                                )
                             if clicked > -1:
                                 st.session_state.y_answered = True
                                 correct = str(row.get("正誤", "")).strip()
@@ -1250,6 +1278,7 @@ if menu == "年度別":
                                 st.rerun()
 
                     with ui_actions:
+                        st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
                         col_audio, col_bm = st.columns(2)
                         with col_audio:
                             if st.button("🔊 音声", key=f"btn_audio_y_{ptr}", use_container_width=True):
@@ -1477,10 +1506,22 @@ elif menu == "科目別":
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.c_answered:
-                            col_btn_o_c, col_btn_x_c = st.columns(2)
-                            clicked_o_c = col_btn_o_c.button("〇 正解", key=f"c_o_{ptr_c}", use_container_width=True)
-                            clicked_x_c = col_btn_x_c.button("✖ 不正解", key=f"c_x_{ptr_c}", use_container_width=True)
-                            clicked_c = 0 if clicked_o_c else (1 if clicked_x_c else -1)
+                            if st.session_state.get("fast_mode", False):
+                                st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                col_btn_o_c, col_btn_x_c = st.columns(2)
+                                clicked_o_c = col_btn_o_c.button("〇 正解", key=f"c_o_{ptr_c}", use_container_width=True)
+                                clicked_x_c = col_btn_x_c.button("✖ 不正解", key=f"c_x_{ptr_c}", use_container_width=True)
+                                clicked_c = 0 if clicked_o_c else (1 if clicked_x_c else -1)
+                            else:
+                                clicked_c = clickable_images(
+                                    [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                    if os.path.exists("images/btn_o.png") else
+                                    [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                    titles=["正解", "不正解"],
+                                    div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                    img_style={"width": "120px", "cursor": "pointer"},
+                                    key=f"img_btn_c_{ptr_c}"
+                                )
                             if clicked_c > -1:
                                 st.session_state.c_answered = True
                                 correct = str(row.get("正誤", "")).strip()
@@ -1495,6 +1536,7 @@ elif menu == "科目別":
                                 st.rerun()
                                 
                     with ui_actions:
+                        st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
                         col_audio_c, col_bm_c = st.columns(2)
                         with col_audio_c:
                             if st.button("🔊 音声", key=f"btn_audio_c_{ptr_c}", use_container_width=True):
@@ -1726,10 +1768,22 @@ elif menu == "付箋問題":
                             st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                             if not st.session_state.bm_answered:
-                                col_btn_o_bm, col_btn_x_bm = st.columns(2)
-                                clicked_o_bm = col_btn_o_bm.button("〇 正解", key=f"bm_o_{ptr_bm}", use_container_width=True)
-                                clicked_x_bm = col_btn_x_bm.button("✖ 不正解", key=f"bm_x_{ptr_bm}", use_container_width=True)
-                                clicked_bm = 0 if clicked_o_bm else (1 if clicked_x_bm else -1)
+                                if st.session_state.get("fast_mode", False):
+                                    st.markdown('<div class="keep-row big-btn-row"></div>', unsafe_allow_html=True)
+                                    col_btn_o_bm, col_btn_x_bm = st.columns(2)
+                                    clicked_o_bm = col_btn_o_bm.button("〇 正解", key=f"bm_o_{ptr_bm}", use_container_width=True)
+                                    clicked_x_bm = col_btn_x_bm.button("✖ 不正解", key=f"bm_x_{ptr_bm}", use_container_width=True)
+                                    clicked_bm = 0 if clicked_o_bm else (1 if clicked_x_bm else -1)
+                                else:
+                                    clicked_bm = clickable_images(
+                                        [get_image_base64("images/btn_o.png"), get_image_base64("images/btn_x.png")]
+                                        if os.path.exists("images/btn_o.png") else
+                                        [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
+                                        titles=["正解", "不正解"],
+                                        div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
+                                        img_style={"width": "120px", "cursor": "pointer"},
+                                        key=f"img_btn_bm_{ptr_bm}"
+                                    )
                                 if clicked_bm > -1:
                                     st.session_state.bm_answered = True
                                     correct = str(row.get("正誤", "")).strip()
@@ -1744,6 +1798,7 @@ elif menu == "付箋問題":
                                     st.rerun()
 
                         with ui_actions:
+                            st.markdown('<div class="keep-row"></div>', unsafe_allow_html=True)
                             col_audio_bm, col_bm_bm = st.columns(2)
                             with col_audio_bm:
                                 if st.button("🔊 音声", key=f"btn_audio_bm_{ptr_bm}", use_container_width=True):
