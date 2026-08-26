@@ -862,16 +862,14 @@ st.markdown("""
         /* Force horizontal layout for ALL columns in main container */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] {
             flex-direction: row !important;
-            flex-wrap: nowrap !important;
+            flex-wrap: wrap !important;
             gap: 6px !important;
             width: 100% !important;
-            overflow: hidden !important;
         }
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            width: 0 !important;
-            min-width: 0 !important;
-            flex: 1 1 0% !important;
-            overflow: hidden !important;
+            width: calc(50% - 4px) !important;
+            min-width: calc(50% - 4px) !important;
+            flex: 1 1 calc(50% - 4px) !important;
         }
 
         /* Adjust button sizes for mobile */
@@ -1301,7 +1299,7 @@ if menu == "年度別":
                                     [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
                                     titles=["正解", "不正解"],
                                     div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                    img_style={"width": "120px", "cursor": "pointer"},
+                                    img_style={"width": "100px", "cursor": "pointer"},
                                     key=f"img_btn_y_{ptr}"
                                 )
                             if clicked > -1:
@@ -1559,7 +1557,7 @@ elif menu == "科目別":
                                     [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
                                     titles=["正解", "不正解"],
                                     div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                    img_style={"width": "120px", "cursor": "pointer"},
+                                    img_style={"width": "100px", "cursor": "pointer"},
                                     key=f"img_btn_c_{ptr_c}"
                                 )
                             if clicked_c > -1:
@@ -1823,7 +1821,7 @@ elif menu == "付箋問題":
                                         [get_image_base64("images/0_btn_o.png"), get_image_base64("images/0_btn_x.png")],
                                         titles=["正解", "不正解"],
                                         div_style={"display": "flex", "justify-content": "center", "gap": "20px"},
-                                        img_style={"width": "120px", "cursor": "pointer"},
+                                        img_style={"width": "100px", "cursor": "pointer"},
                                         key=f"img_btn_bm_{ptr_bm}"
                                     )
                                 if clicked_bm > -1:
