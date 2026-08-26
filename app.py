@@ -861,26 +861,18 @@ st.markdown("""
     }
 
     @media (max-width: 768px) {
-        /* スマホでは無理な横並びをやめ、自然に改行（縦並び）させる */
-        div[data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: column !important; /* 縦並びに指定 */
-            gap: 10px !important;
-            width: 100% !important;
-        }
-        
-        /* カラムの幅を100%にすることで、文字（年度など）が潰れるのを防ぐ */
-        div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
-            width: 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important;
-        }
+        /* 無理な横並び・幅指定のCSSをすべて削除し、
+           Streamlit標準の「スマホ画面では安全に縦並び（改行）にする機能」に任せる */
 
-        /* ボタンが画面外にはみ出さないよう横幅100%に固定 */
+        /* ボタンの高さと文字サイズだけスマホ用に整える */
         div[data-testid="stHorizontalBlock"] button {
             width: 100% !important;
-            height: 48px !important;
+            height: 50px !important;
             padding: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] button p {
+            font-size: 1rem !important;
+            margin: 0 !important;
         }
         
         .header-img-top-hide-mobile { display: none !important; }
