@@ -1998,13 +1998,30 @@ elif menu == "過去問聞き流し":
     if not target_rows.empty:
         batch_size = 20
         total_questions = len(target_rows)
-        total_batches = (total_questions + batch_size - 1) // batch_size  # ← ★この1行を追加！
+        total_batches = (total_questions + batch_size - 1) // batch_size
 
+        # 初期化
         if "listen_batch_page" not in st.session_state:
             st.session_state.listen_batch_page = 0
 
+        # --- ▼ 修正のポイント：ボタンの入力を先回りして処理する ---
+        # 隠しパラメータとしてボタン押下のフラグを受け取り、先にページ番号を更新する
+        if st.session_state.get("btn_prev_clicked"):
+            st.session_state.listen_batch_page -= 1
+            st.session_state.auto_play_next = True
+            st.session_state.btn_prev_clicked = False
+        
+        if st.session_state.get("btn_next_clicked"):
+            st.session_state.listen_batch_page += 1
+            st.session_state.auto_play_next = True
+            st.session_state.btn_next_clicked = False
+
+        # 範囲外エラー防止
         if st.session_state.listen_batch_page >= total_batches:
             st.session_state.listen_batch_page = 0
+        elif st.session_state.listen_batch_page < 0:
+            st.session_state.listen_batch_page = 0
+        # --- ▲ ここまで ---
 
         batch_options = []
         for i in range(total_batches):
@@ -2020,12 +2037,7 @@ elif menu == "過去問聞き流し":
             else:
                 batch_options.append(batch_str + " 🔒[有料会員限定]")
 
-        # 現在のページ（内部状態）に対応する選択肢の文字列を取得
         current_batch_page = st.session_state.listen_batch_page
-        if current_batch_page >= len(batch_options):
-            current_batch_page = 0
-            st.session_state.listen_batch_page = 0
-
         current_option_str = batch_options[current_batch_page]
 
         # セレクトボックスを表示
@@ -2036,11 +2048,11 @@ elif menu == "過去問聞き流し":
             key="selected_batch_str"
         )
 
-        # もしユーザーがプルダウンを手動で変更した場合、内部状態（ページ）を更新する
+        # プルダウンが手動で変更された場合
         if selected_batch_str != current_option_str:
             try:
                 st.session_state.listen_batch_page = batch_options.index(selected_batch_str)
-                current_batch_page = st.session_state.listen_batch_page
+                st.rerun() # ★変更を即座に反映
             except ValueError:
                 pass
 
@@ -2048,17 +2060,15 @@ elif menu == "過去問聞き流し":
             render_paywall()
             col1, col2 = st.columns(2)
             with col1:
-                    if current_batch_page > 0:
-                        if st.button("⏮ 前のグループへ", use_container_width=True, key="btn_prev_batch"):
-                            st.session_state.listen_batch_page -= 1
-                            st.session_state.auto_play_next = True
-                            st.rerun()
+                if current_batch_page > 0:
+                    if st.button("⏮ 前のグループへ", use_container_width=True, key="btn_prev_batch_lock"):
+                        st.session_state.btn_prev_clicked = True
+                        st.rerun()
             with col2:
-                    if current_batch_page + 1 < total_batches:
-                        if st.button("次のグループへ ⏩", use_container_width=True, key="btn_next_batch"):
-                            st.session_state.listen_batch_page += 1
-                            st.session_state.auto_play_next = True
-                            st.rerun()
+                if current_batch_page + 1 < total_batches:
+                    if st.button("次のグループへ ⏩", use_container_width=True, key="btn_next_batch_lock"):
+                        st.session_state.btn_next_clicked = True
+                        st.rerun()
         else:
             start_q = current_batch_page * batch_size
             end_q = min(start_q + batch_size, total_questions)
@@ -2124,18 +2134,16 @@ elif menu == "過去問聞き流し":
                 with col1:
                     if current_batch_page > 0:
                         if st.button("⏮ 前のグループへ", use_container_width=True, key="btn_prev_batch"):
-                            st.session_state.listen_batch_page -= 1
-                            st.session_state.auto_play_next = True
+                            st.session_state.btn_prev_clicked = True
                             st.rerun()
                 with col2:
                     if current_batch_page + 1 < total_batches:
                         if st.button("次のグループへ ⏩", use_container_width=True, key="btn_next_batch"):
-                            st.session_state.listen_batch_page += 1
-                            st.session_state.auto_play_next = True
+                            st.session_state.btn_next_clicked = True
                             st.rerun()
             else:
                 st.error("選択された区間の対応音声ファイルが見つかりませんでした。")
-
+                
 # ==========================================
 # ルート4：AIに質問（チャット）
 # ==========================================
