@@ -820,6 +820,23 @@ st.markdown("""
     .stApp {
         background-color: #f8f9fa;
     }
+
+     /* 👇👇👇 ここから追加（プルダウンの白飛び修正） 👇👇👇 */
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+    }
+    div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
+        color: #0F172A !important;
+    }
+    ul[data-baseweb="menu"] {
+        background-color: #ffffff !important;
+    }
+    ul[data-baseweb="menu"] li,
+    ul[data-baseweb="menu"] li * {
+        color: #0F172A !important;
+    }
+    /* 👆👆👆 ここまで追加 👆👆👆 */
+    
     .custom-question-card {
         border-radius: 16px;
         background-color: #ffffff;
