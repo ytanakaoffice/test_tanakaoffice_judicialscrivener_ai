@@ -191,7 +191,7 @@ def render_continuous_player(playlist, current_batch, total_batches, auto_start=
             setTimeout(function() {{
                 try {{
                     const buttons = Array.from(window.parent.document.querySelectorAll('button'));
-                    const nextBtn = buttons.find(b => b.innerText && b.innerText.includes('次の'));
+                    const nextBtn = buttons.find(b => b.innerText && b.innerText.includes('次のグループへ'));
                     if (nextBtn) {{
                         nextBtn.click();
                     }}
@@ -1998,10 +1998,8 @@ elif menu == "過去問聞き流し":
             target_rows = df[df["分野"] == sel_cat].reset_index(drop=True)
 
     if not target_rows.empty:
-        # ★ 10問から50問に拡張し、1年度分が途切れないようにする
-        batch_size = 50 
+        batch_size = 10 # 50から10に戻してメモリパンクを防ぐ
         total_questions = len(target_rows)
-        total_batches = (total_questions + batch_size - 1) // batch_size
 
         if "listen_batch_page" not in st.session_state:
             st.session_state.listen_batch_page = 0
