@@ -821,21 +821,6 @@ st.markdown("""
         background-color: #f8f9fa;
     }
 
-     /* 👇👇👇 ここから追加（プルダウンの白飛び修正） 👇👇👇 */
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] {
-        background-color: #ffffff !important;
-    }
-    div[data-testid="stSelectbox"] div[data-baseweb="select"] * {
-        color: #0F172A !important;
-    }
-    ul[data-baseweb="menu"] {
-        background-color: #ffffff !important;
-    }
-    ul[data-baseweb="menu"] li,
-    ul[data-baseweb="menu"] li * {
-        color: #0F172A !important;
-    }
-    /* 👆👆👆 ここまで追加 👆👆👆 */
 
     .custom-question-card {
         border-radius: 16px;
@@ -906,18 +891,18 @@ st.markdown("""
             width: auto !important;
         }
 
-        div[data-testid="stHorizontalBlock"] button {
-            width: 100% !important;
-            height: 46px !important;
-            padding: 0 !important;
-        }
-        div[data-testid="stHorizontalBlock"] button p {
-            font-size: 0.9rem !important;
-            white-space: nowrap !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            margin: 0 !important;
-        }
+        div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) {
+                width: 100% !important;
+                height: 46px !important;
+                padding: 0 !important;
+            }
+            div[data-testid="stHorizontalBlock"] button:not([role="combobox"]) p {
+                font-size: 0.9rem !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                margin: 0 !important;
+            }
         
         .header-img-top-hide-mobile { display: none !important; }
         
