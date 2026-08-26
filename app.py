@@ -826,11 +826,11 @@ st.markdown("""
         margin-bottom: 12px;
     }
     .header-img-top-hide-mobile, .header-img-top-always { display: block !important; margin-bottom: 1rem; width: 100%; border-radius: 8px; }
-    .header-img-bottom { display: none !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
+    .header-img-bottom { display: block !important; width: 100%; border-radius: 8px; margin-top: 2rem; }
 
-    .keep-row { display: none; }
+    .keep-row, .keep-row-73 { display: none; }
     .big-btn-row { display: none; }
-    .big-btn-row + div[data-testid="stHorizontalBlock"] button {
+    div[data-testid="stElementContainer"]:has(.big-btn-row) + div[data-testid="stHorizontalBlock"] button {
         height: 60px !important;
         font-size: 1.2rem !important;
         font-weight: 700 !important;
@@ -839,24 +839,39 @@ st.markdown("""
         color: #334155 !important;
         background-color: #f8fafc !important;
     }
-    .big-btn-row + div[data-testid="stHorizontalBlock"] button:hover {
+    div[data-testid="stElementContainer"]:has(.big-btn-row) + div[data-testid="stHorizontalBlock"] button:hover {
         background-color: #e2e8f0 !important;
         border-color: #cbd5e1 !important;
         color: #0f172a !important;
     }
     @media (max-width: 768px) {
-        .keep-row + div[data-testid="stHorizontalBlock"] {
+        div[data-testid="stElementContainer"]:has(.keep-row) + div[data-testid="stHorizontalBlock"] {
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             gap: 10px !important;
         }
-        .keep-row + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        div[data-testid="stElementContainer"]:has(.keep-row) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
             width: 50% !important;
             flex: 1 1 0% !important;
             min-width: 0 !important;
         }
+        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] {
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            gap: 10px !important;
+        }
+        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) {
+            width: 65% !important;
+            flex: 6.5 1 0% !important;
+            min-width: 0 !important;
+        }
+        div[data-testid="stElementContainer"]:has(.keep-row-73) + div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) {
+            width: 35% !important;
+            flex: 3.5 1 0% !important;
+            min-width: 0 !important;
+        }
         .header-img-top-hide-mobile { display: none !important; }
-        .header-img-bottom { display: block !important; }
+        
         .custom-question-card {
             font-size: 1.2rem !important;
             padding: 16px;
@@ -1121,15 +1136,12 @@ else:
         show_tokusho_dialog()
 
 st.sidebar.markdown("---")
-st.session_state.fast_mode = st.sidebar.toggle("⚡ サクサク軽量モード", value=False, help="〇✖画像をオフにしてスマホでの動作を高速化します")
-st.sidebar.markdown("---")
 menu = st.sidebar.radio("移動先を選択", ["年度別", "科目別", "付箋問題", "過去問聞き流し", "AIに質問（チャット）"])
 
 # ==========================================
 # ルート1：年度別
 # ==========================================
 if menu == "年度別":
-    render_header_image()
 
     if not df.empty and "問題番号" in df.columns:
         all_questions = df["問題番号"].dropna().unique()
@@ -1224,6 +1236,7 @@ if menu == "年度別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
+                        st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
                         col_info, col_next = st.columns([7, 3])
                         with col_info:
                             st.markdown(
@@ -1235,7 +1248,7 @@ if menu == "年度別":
                             )
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         with col_next:
-                            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                            st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="c_fast_toggle")
                             if st.button("次へ ➡", key=f"y_btn_next_top_{ptr}", use_container_width=True):
                                 st.session_state.y_ptr += 1
                                 st.session_state.y_answered = False
@@ -1382,7 +1395,6 @@ if menu == "年度別":
 # ルート2：科目別
 # ==========================================
 elif menu == "科目別":
-    render_header_image()
 
     if not df.empty and "分野" in df.columns:
         categories = sorted(df["分野"].dropna().unique())
@@ -1481,6 +1493,7 @@ elif menu == "科目別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
+                        st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
                         col_info_c, col_next_c = st.columns([7, 3])
                         with col_info_c:
                             st.markdown(
@@ -1493,7 +1506,7 @@ elif menu == "科目別":
                             st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         
                         with col_next_c:
-                            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                            st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="bm_fast_toggle")
                             if st.button("次へ ➡", key=f"c_btn_next_top_{ptr_c}", use_container_width=True):
                                 st.session_state.c_ptr += 1
                                 st.session_state.c_answered = False
@@ -1634,11 +1647,12 @@ elif menu == "科目別":
                         reset_inline_chat()
                         st.rerun()
 
+    render_header_image("bottom")
+
 # ==========================================
 # ルート2.5：付箋問題
 # ==========================================
 elif menu == "付箋問題":
-    render_header_image()
     st.subheader("📌 付箋をつけた問題")
 
     if not is_logged_in:
@@ -1743,6 +1757,7 @@ elif menu == "付箋問題":
                         is_bookmarked = q_key in st.session_state.user_bookmarks
 
                         with ui_top:
+                            st.markdown('<div class="keep-row-73"></div>', unsafe_allow_html=True)
                             col_info_bm, col_next_bm = st.columns([7, 3])
                             with col_info_bm:
                                 st.markdown(
@@ -1755,7 +1770,7 @@ elif menu == "付箋問題":
                                 st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                             
                             with col_next_bm:
-                                st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                                st.session_state.fast_mode = st.toggle("⚡ 画像OFF (軽量化)", value=st.session_state.get("fast_mode", False), key="y_fast_toggle")
                                 if st.button("次へ ➡", key=f"bm_btn_next_top_{ptr_bm}", use_container_width=True):
                                     st.session_state.bm_ptr += 1
                                     st.session_state.bm_answered = False
@@ -1893,6 +1908,8 @@ elif menu == "付箋問題":
                             st.session_state.bm_active_audio = None
                             reset_inline_chat()
                             st.rerun()
+
+    render_header_image("bottom")
 
 # ==========================================
 # ルート3：過去問聞き流し
