@@ -866,40 +866,31 @@ st.markdown("""
             flex-wrap: nowrap !important;
             gap: 8px !important;
             width: 100% !important;
-            box-sizing: border-box !important;
         }
         
-        /* すべてのカラムを約50%ずつに固定 */
+        /* 1行に2つ並べるための魔法（コンテンツサイズに負けない） */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] > [data-testid="column"] {
-            width: calc(50% - 4px) !important;
-            min-width: calc(50% - 4px) !important;
-            max-width: calc(50% - 4px) !important;
-            flex: 1 1 calc(50% - 4px) !important;
-            overflow: hidden !important;
+            width: 50% !important;
+            min-width: 0 !important;
+            flex: 1 1 0% !important;
         }
         
         /* 1行目（問題情報 と 次へボタン）の比率調整 */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(1) {
-            width: calc(65% - 4px) !important;
-            min-width: calc(65% - 4px) !important;
-            max-width: calc(65% - 4px) !important;
-            flex: 1 1 calc(65% - 4px) !important;
+            flex: 2 1 0% !important; /* 約66% */
         }
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) > [data-testid="column"]:nth-child(2) {
-            width: calc(35% - 4px) !important;
-            min-width: calc(35% - 4px) !important;
-            max-width: calc(35% - 4px) !important;
-            flex: 1 1 calc(35% - 4px) !important;
+            flex: 1 1 0% !important; /* 約33% */
         }
 
         /* ボタンが枠からはみ出さないようにする */
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"] button {
             height: 48px !important;
-            font-size: 0.95rem !important;
+            font-size: 0.9rem !important;
             border-radius: 8px !important;
             width: 100% !important;
-            max-width: 100% !important;
-            padding: 0 2px !important;
+            padding: 0 !important;
+            margin: 0 !important;
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
@@ -909,7 +900,7 @@ st.markdown("""
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) button,
         [data-testid="stMainBlockContainer"] [data-testid="stHorizontalBlock"]:nth-of-type(1) div[data-testid="stToggle"] {
             height: 38px !important;
-            font-size: 0.85rem !important;
+            font-size: 0.8rem !important;
             margin-bottom: 2px !important;
         }
         
