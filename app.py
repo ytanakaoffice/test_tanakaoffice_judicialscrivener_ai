@@ -1175,14 +1175,27 @@ if menu == "年度別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
-                        st.markdown(
-                            f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
-                            f'【 年度: {selected_session} 】 ( {ptr + 1} / {len(session_rows)} 問目 )<br>'
-                            f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate:.1f}% ({st.session_state.y_total_count}問中 {st.session_state.y_correct_count}問正解)</span>'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
-                        st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                        col_info, col_next = st.columns([7, 3])
+                        with col_info:
+                            st.markdown(
+                                f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
+                                f'【 年度: {selected_session} 】 ( {ptr + 1} / {len(session_rows)} 問目 )<br>'
+                                f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate:.1f}% ({st.session_state.y_total_count}問中 {st.session_state.y_correct_count}問正解)</span>'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+                            st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                        with col_next:
+                            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                            if st.button("次へ ➡", key=f"y_btn_next_top_{ptr}", use_container_width=True):
+                                st.session_state.y_ptr += 1
+                                st.session_state.y_answered = False
+                                st.session_state.y_user_ans = None
+                                st.session_state.teacher_state = "normal"
+                                st.session_state.y_active_audio = None
+                                reset_inline_chat()
+                                st.rerun()
+
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.y_answered:
@@ -1410,15 +1423,28 @@ elif menu == "科目別":
                     is_bookmarked = q_key in st.session_state.user_bookmarks
 
                     with ui_top:
-                        st.markdown(
-                            f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
-                            f'【 科目: {selected_cat} 】 ( {ptr_c + 1} / {len(cat_rows)} 問目 )<br>'
-                            f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_c:.1f}% ({st.session_state.c_total_count}問中 {st.session_state.c_correct_count}問正解)</span>'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
+                        col_info_c, col_next_c = st.columns([7, 3])
+                        with col_info_c:
+                            st.markdown(
+                                f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
+                                f'【 科目: {selected_cat} 】 ( {ptr_c + 1} / {len(cat_rows)} 問目 )<br>'
+                                f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_c:.1f}% ({st.session_state.c_total_count}問中 {st.session_state.c_correct_count}問正解)</span>'
+                                f'</div>',
+                                unsafe_allow_html=True
+                            )
+                            st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                        
+                        with col_next_c:
+                            st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                            if st.button("次へ ➡", key=f"c_btn_next_top_{ptr_c}", use_container_width=True):
+                                st.session_state.c_ptr += 1
+                                st.session_state.c_answered = False
+                                st.session_state.c_user_ans = None
+                                st.session_state.teacher_state = "normal"
+                                st.session_state.c_active_audio = None
+                                reset_inline_chat()
+                                st.rerun()
 
-                        st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
                         st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                         if not st.session_state.c_answered:
@@ -1652,14 +1678,28 @@ elif menu == "付箋問題":
                         is_bookmarked = q_key in st.session_state.user_bookmarks
 
                         with ui_top:
-                            st.markdown(
-                                f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
-                                f'【 付箋問題 】 ( {ptr_bm + 1} / {len(bookmark_rows)} 問目 )<br>'
-                                f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)</span>'
-                                f'</div>',
-                                unsafe_allow_html=True
-                            )
-                            st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                            col_info_bm, col_next_bm = st.columns([7, 3])
+                            with col_info_bm:
+                                st.markdown(
+                                    f'<div style="font-size: 1.1rem; font-weight: 700; color: #0F172A; line-height: 1.3;">'
+                                    f'【 付箋問題 】 ( {ptr_bm + 1} / {len(bookmark_rows)} 問目 )<br>'
+                                    f'<span style="font-size: 0.85rem; font-weight: 500; color: #475569;">正答率: {acc_rate_bm:.1f}% ({st.session_state.bm_total_count}問中 {st.session_state.bm_correct_count}問正解)</span>'
+                                    f'</div>',
+                                    unsafe_allow_html=True
+                                )
+                                st.caption(f"問題番号: {row.get('問題番号', '')} ｜ 分野: {row.get('分野', '')} ｜ 肢: {row.get('肢', '')}")
+                            
+                            with col_next_bm:
+                                st.markdown("<div style='margin-top: 5px;'></div>", unsafe_allow_html=True)
+                                if st.button("次へ ➡", key=f"bm_btn_next_top_{ptr_bm}", use_container_width=True):
+                                    st.session_state.bm_ptr += 1
+                                    st.session_state.bm_answered = False
+                                    st.session_state.bm_user_ans = None
+                                    st.session_state.teacher_state = "normal"
+                                    st.session_state.bm_active_audio = None
+                                    reset_inline_chat()
+                                    st.rerun()
+
                             st.markdown(f'<div class="custom-question-card">{row.get("文章", "")}</div>', unsafe_allow_html=True)
 
                             if not st.session_state.bm_answered:
